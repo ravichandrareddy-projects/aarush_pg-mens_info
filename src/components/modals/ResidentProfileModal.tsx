@@ -138,7 +138,14 @@ export const ResidentProfileModal: React.FC<ResidentProfileModalProps> = ({
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-4 rounded-xl border border-[#F5F2ED]">
                 <div>
                   <span className="text-[#747878] block">Phone Number</span>
-                  <span className="font-medium text-[#181919]">{resident.phone}</span>
+                  <a
+                    href={`tel:${resident.phone}`}
+                    className="font-semibold text-[#536347] font-mono hover:underline flex items-center gap-1 mt-0.5"
+                    title="Click to Call Dialer"
+                  >
+                    <Phone className="w-3.5 h-3.5" />
+                    <span>{resident.phone}</span>
+                  </a>
                 </div>
                 <div>
                   <span className="text-[#747878] block">Date of Birth</span>
@@ -156,9 +163,18 @@ export const ResidentProfileModal: React.FC<ResidentProfileModalProps> = ({
                   EMERGENCY CONTACT
                 </h4>
                 <p className="font-semibold text-[#181919] text-sm">{resident.emergencyName}</p>
-                <p className="text-[#747878] font-mono">
-                  {resident.emergencyRelationship} • {resident.emergencyPhone}
-                </p>
+                <div className="text-[#747878] font-mono flex items-center gap-2 text-xs">
+                  <span>{resident.emergencyRelationship}</span>
+                  <span>•</span>
+                  <a
+                    href={`tel:${resident.emergencyPhone}`}
+                    className="text-[#536347] font-semibold hover:underline flex items-center gap-1"
+                    title="Click to Call Emergency Contact"
+                  >
+                    <Phone className="w-3 h-3" />
+                    <span>{resident.emergencyPhone}</span>
+                  </a>
+                </div>
               </div>
             </div>
           )}

@@ -154,10 +154,15 @@ export const ResidentsView: React.FC<ResidentsViewProps> = ({ onOpenAddResident,
                       <h3 className="font-semibold text-base text-[#181919] group-hover:text-[#536347] transition-colors">
                         {res.fullName}
                       </h3>
-                      <p className="text-xs text-[#747878] font-mono flex items-center gap-1">
-                        <Phone className="w-3 h-3 text-[#747878]" />
+                      <a
+                        href={`tel:${res.phone}`}
+                        onClick={(e) => e.stopPropagation()}
+                        className="text-xs text-[#536347] font-mono flex items-center gap-1 hover:underline font-medium"
+                        title="Click to Call Dialer"
+                      >
+                        <Phone className="w-3 h-3 text-[#536347]" />
                         <span>{res.phone}</span>
-                      </p>
+                      </a>
                     </div>
                   </div>
 

@@ -9,7 +9,8 @@ import {
   Filter,
   CheckCircle2,
   Utensils,
-  Briefcase
+  Briefcase,
+  Phone
 } from 'lucide-react';
 import { usePG } from '../../context/PGContext';
 import { Floor, Room, Bed } from '../../types/pg';
@@ -163,7 +164,15 @@ export const FloorsRoomsView: React.FC<FloorsRoomsViewProps> = ({
                           </div>
                           <div>
                             <p className="font-semibold text-sm text-[#181919]">{resident.fullName}</p>
-                            <p className="text-xs text-[#747878] font-mono">{resident.phone}</p>
+                            <a
+                              href={`tel:${resident.phone}`}
+                              onClick={(e) => e.stopPropagation()}
+                              className="text-xs text-[#536347] font-mono hover:underline flex items-center gap-1 font-semibold"
+                              title="Click to Call Dialer"
+                            >
+                              <Phone className="w-3 h-3" />
+                              <span>{resident.phone}</span>
+                            </a>
                           </div>
                         </div>
 
