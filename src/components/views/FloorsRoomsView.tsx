@@ -178,8 +178,8 @@ export const FloorsRoomsView: React.FC<FloorsRoomsViewProps> = ({
 
                         <div className="grid grid-cols-2 gap-2 text-[11px] pt-2 font-mono text-[#747878] border-t border-[#F5F2ED]">
                           <div>
-                            <span>Joined:</span>{' '}
-                            <span className="text-[#181919] font-medium">{resident.joiningDate}</span>
+                            <span>Rent Due:</span>{' '}
+                            <span className="text-[#536347] font-semibold">{resident.rentDueDay || 1}{(resident.rentDueDay || 1) === 1 ? 'st' : (resident.rentDueDay || 1) === 2 ? 'nd' : (resident.rentDueDay || 1) === 3 ? 'rd' : 'th'}</span>
                           </div>
                           <div>
                             <span>Rent:</span>{' '}

@@ -70,6 +70,7 @@ export interface Resident {
   joiningDate: string;
   leavingDate?: string;
   monthlyRent: number;
+  rentDueDay?: number; // Day of month when rent is due (e.g. 1st, 5th, 15th, 28th)
   
   // Status
   status: 'ACTIVE' | 'LEFT';

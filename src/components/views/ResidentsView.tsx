@@ -197,6 +197,11 @@ export const ResidentsView: React.FC<ResidentsViewProps> = ({ onOpenAddResident,
                       ₹{res.monthlyRent.toLocaleString()}/mo
                     </span>
                   </div>
+
+                  <div className="flex items-center justify-between text-[#536347] font-semibold bg-[#F2F7EE] px-2 py-1 rounded border border-[#D4E6C2] text-[11px] mt-1">
+                    <span>Rent Due Date:</span>
+                    <span>{res.rentDueDay || 1}{(res.rentDueDay || 1) === 1 ? 'st' : (res.rentDueDay || 1) === 2 ? 'nd' : (res.rentDueDay || 1) === 3 ? 'rd' : 'th'} of every month</span>
+                  </div>
                 </div>
               </div>
 

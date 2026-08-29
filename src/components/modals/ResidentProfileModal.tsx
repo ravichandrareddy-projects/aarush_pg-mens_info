@@ -131,6 +131,12 @@ export const ResidentProfileModal: React.FC<ResidentProfileModalProps> = ({
                     <span className="text-[#747878] block">Monthly Rent</span>
                     <span className="font-bold text-sm text-[#181919]">₹{resident.monthlyRent.toLocaleString()}</span>
                   </div>
+                  <div>
+                    <span className="text-[#747878] block">Rent Due Date</span>
+                    <span className="font-bold text-sm text-[#536347]">
+                      {resident.rentDueDay || 1}{(resident.rentDueDay || 1) === 1 ? 'st' : (resident.rentDueDay || 1) === 2 ? 'nd' : (resident.rentDueDay || 1) === 3 ? 'rd' : 'th'} of month
+                    </span>
+                  </div>
                 </div>
               </div>
 
