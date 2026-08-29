@@ -1,0 +1,8 @@
+{
+  "appId": "com.aarush.menspg",
+  "appName": "Aarush Mens Luxury PG",
+  "webDir": "dist",
+  "server": {
+    "androidScheme": "https"
+  }
+}

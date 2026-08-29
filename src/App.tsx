@@ -1,0 +1,188 @@
+import React, { useState, useEffect } from 'react';
+import { PGProvider, usePG } from './context/PGContext';
+import { Sidebar, NavTab } from './components/layout/Sidebar';
+import { MobileNav } from './components/layout/MobileNav';
+import { Header } from './components/layout/Header';
+
+import { DashboardView } from './components/views/DashboardView';
+import { FloorsRoomsView } from './components/views/FloorsRoomsView';
+import { ResidentsView } from './components/views/ResidentsView';
+import { EmptyBedsView } from './components/views/EmptyBedsView';
+import { PaymentsView } from './components/views/PaymentsView';
+import { ReportsView } from './components/views/ReportsView';
+import { SettingsView } from './components/views/SettingsView';
+
+import { AddResidentModal } from './components/modals/AddResidentModal';
+import { ResidentProfileModal } from './components/modals/ResidentProfileModal';
+import { MoveResidentModal } from './components/modals/MoveResidentModal';
+import { MarkLeftModal } from './components/modals/MarkLeftModal';
+import { RecordPaymentModal } from './components/modals/RecordPaymentModal';
+import { GlobalSearchModal } from './components/modals/GlobalSearchModal';
+
+const MainAppContent: React.FC = () => {
+  const { theme } = usePG();
+  const [activeTab, setActiveTab] = useState<NavTab>('dashboard');
+
+  // Modals state
+  const [isAddResidentOpen, setIsAddResidentOpen] = useState(false);
+  const [addResidentPreselect, setAddResidentPreselect] = useState<{
+    floorId?: string;
+    roomId?: string;
+    bedId?: string;
+  }>({});
+
+  const [selectedResidentId, setSelectedResidentId] = useState<string | null>(null);
+  const [moveResidentId, setMoveResidentId] = useState<string | null>(null);
+  const [markLeftResidentId, setMarkLeftResidentId] = useState<string | null>(null);
+
+  const [isRecordPaymentOpen, setIsRecordPaymentOpen] = useState(false);
+  const [recordPaymentResidentId, setRecordPaymentResidentId] = useState<string | undefined>();
+
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+
+  // Keyboard shortcut Ctrl+K / Cmd+K for search
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        setIsSearchOpen(true);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  const handleOpenAddResident = () => {
+    setAddResidentPreselect({});
+    setIsAddResidentOpen(true);
+  };
+
+  const handleOpenAddResidentForBed = (floorId: string, roomId: string, bedId: string) => {
+    setAddResidentPreselect({ floorId, roomId, bedId });
+    setIsAddResidentOpen(true);
+  };
+
+  const handleOpenRecordPayment = (resId?: string) => {
+    setRecordPaymentResidentId(resId);
+    setIsRecordPaymentOpen(true);
+  };
+
+  return (
+    <div className={`min-h-screen flex flex-col md:flex-row transition-colors ${
+      theme === 'atelier' ? 'bg-[#FDFBF7] text-[#181919]' : 'bg-[#F8F9FA] text-[#181919]'
+    }`}>
+      {/* Desktop Left Sidebar Navigation */}
+      <Sidebar
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        onOpenAddResident={handleOpenAddResident}
+      />
+
+      {/* Right Main Application Area */}
+      <div className="flex-1 flex flex-col min-w-0 pb-20 md:pb-0">
+        {/* Top Header Bar */}
+        <Header
+          activeTab={activeTab}
+          onOpenSearch={() => setIsSearchOpen(true)}
+          onOpenAddResident={handleOpenAddResident}
+        />
+
+        {/* Content Canvas */}
+        <main className="flex-1 p-4 md:p-8 max-w-7xl w-full mx-auto">
+          {activeTab === 'dashboard' && (
+            <DashboardView
+              onOpenAddResident={handleOpenAddResident}
+              setActiveTab={setActiveTab}
+            />
+          )}
+
+          {activeTab === 'floors' && (
+            <FloorsRoomsView
+              onOpenAddResidentForBed={handleOpenAddResidentForBed}
+              onViewResident={(resId) => setSelectedResidentId(resId)}
+            />
+          )}
+
+          {activeTab === 'residents' && (
+            <ResidentsView
+              onOpenAddResident={handleOpenAddResident}
+              onSelectResident={(resId) => setSelectedResidentId(resId)}
+            />
+          )}
+
+          {activeTab === 'empty-beds' && (
+            <EmptyBedsView
+              onOpenAddResidentForBed={handleOpenAddResidentForBed}
+            />
+          )}
+
+          {activeTab === 'payments' && (
+            <PaymentsView
+              onOpenRecordPayment={handleOpenRecordPayment}
+              onViewResident={(resId) => setSelectedResidentId(resId)}
+            />
+          )}
+
+          {activeTab === 'reports' && <ReportsView />}
+
+          {activeTab === 'settings' && <SettingsView />}
+        </main>
+      </div>
+
+      {/* Mobile Bottom Navigation Bar (Fixed on mobile < 768px) */}
+      <MobileNav
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        onOpenAddResident={handleOpenAddResident}
+      />
+
+      {/* Application Modals */}
+      <AddResidentModal
+        isOpen={isAddResidentOpen}
+        onClose={() => setIsAddResidentOpen(false)}
+        initialFloorId={addResidentPreselect.floorId}
+        initialRoomId={addResidentPreselect.roomId}
+        initialBedId={addResidentPreselect.bedId}
+      />
+
+      <ResidentProfileModal
+        residentId={selectedResidentId}
+        onClose={() => setSelectedResidentId(null)}
+        onOpenMoveModal={(id) => setMoveResidentId(id)}
+        onOpenMarkLeftModal={(id) => setMarkLeftResidentId(id)}
+        onOpenRecordPayment={(id) => handleOpenRecordPayment(id)}
+      />
+
+      <MoveResidentModal
+        residentId={moveResidentId}
+        onClose={() => setMoveResidentId(null)}
+      />
+
+      <MarkLeftModal
+        residentId={markLeftResidentId}
+        onClose={() => setMarkLeftResidentId(null)}
+      />
+
+      <RecordPaymentModal
+        isOpen={isRecordPaymentOpen}
+        onClose={() => setIsRecordPaymentOpen(false)}
+        initialResidentId={recordPaymentResidentId}
+      />
+
+      <GlobalSearchModal
+        isOpen={isSearchOpen}
+        onClose={() => setIsSearchOpen(false)}
+        setActiveTab={setActiveTab}
+        onSelectResident={(id) => setSelectedResidentId(id)}
+      />
+    </div>
+  );
+};
+
+export default function App() {
+  return (
+    <PGProvider>
+      <MainAppContent />
+    </PGProvider>
+  );
+}
