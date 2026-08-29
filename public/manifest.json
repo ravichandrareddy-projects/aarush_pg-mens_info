@@ -1,16 +1,50 @@
 {
-  "short_name": "Aarush PG",
+  "id": "/",
   "name": "Aarush Mens Luxury PG",
+  "short_name": "Aarush PG",
+  "description": "Complete PG and Hostel Management Application for Aarush Mens Luxury PG with 67 rooms and 240 beds.",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#FDFBF7",
+  "theme_color": "#536347",
+  "dir": "ltr",
+  "lang": "en-US",
+  "categories": ["utilities", "business", "lifestyle"],
   "icons": [
     {
-      "src": "favicon.ico",
-      "sizes": "64x64 32x32 24x24 16x16",
-      "type": "image/x-icon"
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/maskable-icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ],
-  "start_url": ".",
-  "display": "standalone",
-  "theme_color": "#FDFBF7",
-  "background_color": "#FDFBF7",
-  "orientation": "portrait"
+  "shortcuts": [
+    {
+      "name": "Add Resident",
+      "short_name": "Add",
+      "description": "Onboard a new resident",
+      "url": "/?action=add",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Empty Beds",
+      "short_name": "Empty",
+      "description": "Browse 240 vacant beds",
+      "url": "/?tab=empty-beds",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    }
+  ]
 }

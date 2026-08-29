@@ -4,6 +4,19 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>Aarush Mens Luxury PG - Management System</title>
+    <meta name="description" content="Complete PG and Hostel Management Application for Aarush Mens Luxury PG with 67 rooms and 240 beds." />
+    
+    <!-- PWA Web App Manifest -->
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#536347" />
+    
+    <!-- Apple iOS Safari Meta Tags -->
+    <link rel="apple-touch-icon" href="/icon-192.png" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Aarush PG" />
+    
+    <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -11,5 +24,20 @@
   <body class="bg-[#FDFBF7] text-[#181919] antialiased selection:bg-[#536347] selection:text-white">
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+    
+    <!-- PWA Service Worker Registration -->
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js')
+            .then((registration) => {
+              console.log('PWA ServiceWorker registered with scope:', registration.scope);
+            })
+            .catch((err) => {
+              console.error('PWA ServiceWorker registration failed:', err);
+            });
+        });
+      }
+    </script>
   </body>
 </html>
