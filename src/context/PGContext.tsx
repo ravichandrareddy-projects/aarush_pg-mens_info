@@ -47,6 +47,7 @@ interface PGContextType {
     emergencyName?: string;
     emergencyPhone?: string;
   }>) => { successCount: number; errors: string[] };
+  togglePaymentStatus: (residentId: string) => boolean;
   resetSystem: () => void;
   
   // Helpers
@@ -56,9 +57,9 @@ interface PGContextType {
   getResidentById: (residentId: string) => Resident | undefined;
 }
 
-const STORAGE_KEY_RESIDENTS = 'atelier_pg_residents_v4';
-const STORAGE_KEY_PAYMENTS = 'atelier_pg_payments_v4';
-const STORAGE_KEY_ACTIVITIES = 'atelier_pg_activities_v4';
+const STORAGE_KEY_RESIDENTS = 'atelier_pg_residents_v5';
+const STORAGE_KEY_PAYMENTS = 'atelier_pg_payments_v5';
+const STORAGE_KEY_ACTIVITIES = 'atelier_pg_activities_v5';
 const STORAGE_KEY_THEME = 'atelier_pg_theme_v1';
 
 const PGContext = createContext<PGContextType | undefined>(undefined);
@@ -400,6 +401,74 @@ export const PGProvider: React.FC<{ children: React.ReactNode }> = ({ children }
     return true;
   };
 
+  const togglePaymentStatus = (residentId: string): boolean => {
+    const res = residents.find((r) => r.id === residentId);
+    if (!res) return false;
+
+    const willBePaid = res.paymentStatus !== 'PAID';
+    const newAmountPaid = willBePaid ? res.monthlyRent : 0;
+    const newAmountPending = willBePaid ? 0 : res.monthlyRent;
+    const newStatus = willBePaid ? ('PAID' as const) : ('UNPAID' as const);
+    const todayStr = new Date().toISOString().split('T')[0];
+
+    setResidents((prev) =>
+      prev.map((r) => {
+        if (r.id === residentId) {
+          return {
+            ...r,
+            paymentStatus: newStatus,
+            amountPaid: newAmountPaid,
+            amountPending: newAmountPending,
+            lastPaymentDate: willBePaid ? todayStr : r.lastPaymentDate,
+            lastPaymentMethod: willBePaid ? 'UPI' : r.lastPaymentMethod
+          };
+        }
+        return r;
+      })
+    );
+
+    if (willBePaid) {
+      const paymentEntry: Payment = {
+        id: `PAY-${Date.now()}`,
+        residentId: res.id,
+        residentName: res.fullName,
+        roomNumber: res.roomNumber,
+        bedId: res.bedId,
+        monthlyRent: res.monthlyRent,
+        amountPaid: res.monthlyRent,
+        amountPending: 0,
+        status: 'PAID',
+        paymentDate: todayStr,
+        paymentMethod: 'UPI',
+        notes: 'Owner 1-Click Confirmed Payment'
+      };
+
+      setPayments((prev) => [paymentEntry, ...prev]);
+
+      const log: ActivityLog = {
+        id: `LOG-${Date.now()}`,
+        timestamp: new Date().toISOString(),
+        type: 'PAYMENT_RECORDED',
+        description: `Owner confirmed payment of ₹${res.monthlyRent.toLocaleString()} for ${res.fullName} (Room ${res.roomNumber})`,
+        residentName: res.fullName,
+        roomNumber: res.roomNumber
+      };
+      setActivities((prev) => [log, ...prev]);
+    } else {
+      const log: ActivityLog = {
+        id: `LOG-${Date.now()}`,
+        timestamp: new Date().toISOString(),
+        type: 'PAYMENT_RECORDED',
+        description: `Owner marked ${res.fullName} (Room ${res.roomNumber}) payment status as Unpaid`,
+        residentName: res.fullName,
+        roomNumber: res.roomNumber
+      };
+      setActivities((prev) => [log, ...prev]);
+    }
+
+    return true;
+  };
+
   const importResidents = (
     importData: Array<{
       fullName: string;
@@ -539,6 +608,7 @@ export const PGProvider: React.FC<{ children: React.ReactNode }> = ({ children }
         markResidentLeft,
         recordPayment,
         importResidents,
+        togglePaymentStatus,
         resetSystem,
         getRoomByNumber,
         getBedById,

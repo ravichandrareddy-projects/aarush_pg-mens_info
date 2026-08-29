@@ -25,7 +25,7 @@ export const FloorsRoomsView: React.FC<FloorsRoomsViewProps> = ({
   onOpenAddResidentForBed,
   onViewResident
 }) => {
-  const { floors, theme, getResidentById } = usePG();
+  const { floors, theme, getResidentById, togglePaymentStatus } = usePG();
   const [selectedFloorId, setSelectedFloorId] = useState<string | null>(null);
   const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
   const [sharingFilter, setSharingFilter] = useState<'ALL' | 3 | 4 | 5>('ALL');
@@ -186,6 +186,25 @@ export const FloorsRoomsView: React.FC<FloorsRoomsViewProps> = ({
                             <span>Rent:</span>{' '}
                             <span className="text-[#181919] font-medium">₹{resident.monthlyRent.toLocaleString()}</span>
                           </div>
+                        </div>
+
+                        <div className="pt-2 border-t border-[#F5F2ED] flex items-center justify-between">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              togglePaymentStatus(resident.id);
+                            }}
+                            className={`font-mono font-semibold text-[10px] flex items-center gap-1 px-2.5 py-1 rounded transition-all shadow-xs ${
+                              resident.paymentStatus === 'PAID'
+                                ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                                : 'bg-red-500 text-white hover:bg-red-600 font-bold'
+                            }`}
+                            title={resident.paymentStatus === 'PAID' ? 'Click to mark as Unpaid' : 'Click to confirm payment'}
+                          >
+                            {resident.paymentStatus === 'PAID' ? 'PAID ✓' : 'Confirm Paid'}
+                          </button>
+                          <span className="text-[10px] text-[#536347] font-medium">View →</span>
                         </div>
                       </div>
                     ) : (

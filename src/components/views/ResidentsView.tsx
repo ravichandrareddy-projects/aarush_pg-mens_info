@@ -23,7 +23,7 @@ interface ResidentsViewProps {
 }
 
 export const ResidentsView: React.FC<ResidentsViewProps> = ({ onOpenAddResident, onSelectResident }) => {
-  const { residents, theme } = usePG();
+  const { residents, theme, togglePaymentStatus } = usePG();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'ACTIVE' | 'LEFT' | 'ALL'>('ACTIVE');
 
@@ -208,24 +208,31 @@ export const ResidentsView: React.FC<ResidentsViewProps> = ({ onOpenAddResident,
 
               {/* Payment Status & Action Footer */}
               <div className="pt-3 border-t border-[#F5F2ED] flex items-center justify-between text-xs">
-                <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    togglePaymentStatus(res.id);
+                  }}
+                  className={`font-mono font-semibold text-[11px] flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all shadow-sm ${
+                    res.paymentStatus === 'PAID'
+                      ? 'bg-emerald-100 text-emerald-800 border border-emerald-300 hover:bg-emerald-200'
+                      : 'bg-red-500 text-white hover:bg-red-600 animate-pulse hover:animate-none'
+                  }`}
+                  title={res.paymentStatus === 'PAID' ? 'Click to mark as Unpaid' : 'Click to confirm payment received'}
+                >
                   {res.paymentStatus === 'PAID' ? (
-                    <span className="text-emerald-700 font-mono font-semibold text-[11px] flex items-center gap-1 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-                      <CheckCircle2 className="w-3 h-3 text-emerald-600" />
-                      <span>PAID</span>
-                    </span>
-                  ) : res.paymentStatus === 'PARTIALLY_PAID' ? (
-                    <span className="text-amber-800 font-mono font-semibold text-[11px] flex items-center gap-1 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
-                      <AlertCircle className="w-3 h-3 text-amber-600" />
-                      <span>PARTIAL (₹{res.amountPending})</span>
-                    </span>
+                    <>
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-700" />
+                      <span>PAID ✓</span>
+                    </>
                   ) : (
-                    <span className="text-red-700 font-mono font-semibold text-[11px] flex items-center gap-1 bg-red-50 px-2 py-0.5 rounded border border-red-200">
-                      <XCircle className="w-3 h-3 text-red-600" />
-                      <span>UNPAID</span>
-                    </span>
+                    <>
+                      <XCircle className="w-3.5 h-3.5 text-white" />
+                      <span>Confirm Paid (₹{res.monthlyRent.toLocaleString()})</span>
+                    </>
                   )}
-                </div>
+                </button>
 
                 <span className="text-xs font-medium text-[#536347] group-hover:underline">
                   View Profile →
