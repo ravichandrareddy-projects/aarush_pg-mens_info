@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { usePG } from '../../context/PGContext';
 import { Resident } from '../../types/pg';
+import { formatDayAndYear } from '../../utils/dateUtils';
 
 interface ResidentsViewProps {
   onOpenAddResident: () => void;
@@ -188,7 +189,7 @@ export const ResidentsView: React.FC<ResidentsViewProps> = ({ onOpenAddResident,
 
                   <div className="flex items-center justify-between">
                     <span className="text-[#747878]">Joining Date:</span>
-                    <span className="text-[#181919]">{res.joiningDate}</span>
+                    <span className="text-[#181919] font-medium">{formatDayAndYear(res.joiningDate)}</span>
                   </div>
 
                   <div className="flex items-center justify-between">
@@ -200,7 +201,7 @@ export const ResidentsView: React.FC<ResidentsViewProps> = ({ onOpenAddResident,
 
                   <div className="flex items-center justify-between text-[#536347] font-semibold bg-[#F2F7EE] px-2 py-1 rounded border border-[#D4E6C2] text-[11px] mt-1">
                     <span>Rent Due Date:</span>
-                    <span>{res.rentDueDay || 1}{(res.rentDueDay || 1) === 1 ? 'st' : (res.rentDueDay || 1) === 2 ? 'nd' : (res.rentDueDay || 1) === 3 ? 'rd' : 'th'} of every month</span>
+                    <span>{formatDayAndYear(undefined, res.rentDueDay || 1)}</span>
                   </div>
                 </div>
               </div>

@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { usePG } from '../../context/PGContext';
 import { Resident } from '../../types/pg';
+import { formatDayAndYear } from '../../utils/dateUtils';
 
 interface ResidentProfileModalProps {
   residentId: string | null;
@@ -134,7 +135,7 @@ export const ResidentProfileModal: React.FC<ResidentProfileModalProps> = ({
                   <div>
                     <span className="text-[#747878] block">Rent Due Date</span>
                     <span className="font-bold text-sm text-[#536347]">
-                      {resident.rentDueDay || 1}{(resident.rentDueDay || 1) === 1 ? 'st' : (resident.rentDueDay || 1) === 2 ? 'nd' : (resident.rentDueDay || 1) === 3 ? 'rd' : 'th'} of month
+                      {formatDayAndYear(undefined, resident.rentDueDay || 1)}
                     </span>
                   </div>
                 </div>
