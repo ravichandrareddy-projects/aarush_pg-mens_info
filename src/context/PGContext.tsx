@@ -8,7 +8,11 @@ import {
   Bed,
   Room
 } from '../types/pg';
-import { INITIAL_BUILDING_CONFIG, INITIAL_1ST_FLOOR_RESIDENTS } from '../data/buildingConfig';
+import {
+  INITIAL_BUILDING_CONFIG,
+  INITIAL_1ST_FLOOR_RESIDENTS,
+  INITIAL_2ND_FLOOR_RESIDENTS
+} from '../data/buildingConfig';
 
 export type DesignTheme = 'atelier' | 'vision';
 
@@ -51,12 +55,14 @@ interface PGContextType {
   getResidentById: (residentId: string) => Resident | undefined;
 }
 
-const STORAGE_KEY_RESIDENTS = 'atelier_pg_residents_v2';
-const STORAGE_KEY_PAYMENTS = 'atelier_pg_payments_v2';
-const STORAGE_KEY_ACTIVITIES = 'atelier_pg_activities_v2';
+const STORAGE_KEY_RESIDENTS = 'atelier_pg_residents_v3';
+const STORAGE_KEY_PAYMENTS = 'atelier_pg_payments_v3';
+const STORAGE_KEY_ACTIVITIES = 'atelier_pg_activities_v3';
 const STORAGE_KEY_THEME = 'atelier_pg_theme_v1';
 
 const PGContext = createContext<PGContextType | undefined>(undefined);
+
+const ALL_INITIAL_RESIDENTS = [...INITIAL_1ST_FLOOR_RESIDENTS, ...INITIAL_2ND_FLOOR_RESIDENTS];
 
 export const PGProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [theme, setThemeState] = useState<DesignTheme>(() => {
@@ -66,9 +72,9 @@ export const PGProvider: React.FC<{ children: React.ReactNode }> = ({ children }
   const [residents, setResidents] = useState<Resident[]>(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY_RESIDENTS);
-      return saved ? JSON.parse(saved) : (INITIAL_1ST_FLOOR_RESIDENTS as Resident[]);
+      return saved ? JSON.parse(saved) : (ALL_INITIAL_RESIDENTS as Resident[]);
     } catch {
-      return INITIAL_1ST_FLOOR_RESIDENTS as Resident[];
+      return ALL_INITIAL_RESIDENTS as Resident[];
     }
   });
 
