@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { usePG } from '../../context/PGContext';
 import { NavTab } from '../layout/Sidebar';
+import { getTimeBasedGreeting } from '../../utils/dateUtils';
 
 interface DashboardViewProps {
   onOpenAddResident: () => void;
@@ -27,7 +28,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onOpenAddResident,
       {/* Welcome Header */}
       <section>
         <h1 className="text-2xl md:text-3xl font-semibold text-[#181919] tracking-tight mb-1">
-          Good morning, Admin
+          {getTimeBasedGreeting()}, Admin 👋
         </h1>
         <p className="text-sm text-[#747878]">
           Manage your PG rooms, residents and beds.
