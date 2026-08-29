@@ -41,11 +41,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, onOpe
       {/* Brand Header */}
       <div className="p-6 border-b border-inherit flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className={`w-9 h-9 rounded-lg flex items-center justify-center font-bold transition-all ${
-            theme === 'atelier' ? 'bg-[#181919] text-white' : 'bg-[#536347] text-white shadow-sm'
-          }`}>
-            <Building2 className="w-5 h-5" />
-          </div>
+          <img src="/logo.png" alt="Aarush PG Logo" className="w-10 h-10 rounded-lg object-cover border border-black/10 shadow-subtle" />
           <div>
             <h1 className="font-semibold text-base tracking-tight text-[#181919]">
               {theme === 'atelier' ? 'Aarush Mens Luxury PG' : 'Aarush Executive'}

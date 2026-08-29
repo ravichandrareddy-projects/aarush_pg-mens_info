@@ -30,9 +30,7 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, onOpenSearch, onOpenA
       <div className="flex items-center gap-3">
         {/* Mobile Logo */}
         <div className="md:hidden flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-[#181919] text-white flex items-center justify-center font-bold">
-            <Building2 className="w-4 h-4" />
-          </div>
+          <img src="/logo.png" alt="Aarush PG Logo" className="w-8 h-8 rounded-full object-cover border border-black/10 shadow-subtle" />
           <span className="font-mono font-semibold text-xs tracking-wider uppercase text-[#181919]">
             AARUSH LUXURY PG
           </span>
