@@ -11,7 +11,8 @@ import {
 import {
   INITIAL_BUILDING_CONFIG,
   INITIAL_1ST_FLOOR_RESIDENTS,
-  INITIAL_2ND_FLOOR_RESIDENTS
+  INITIAL_2ND_FLOOR_RESIDENTS,
+  INITIAL_3RD_FLOOR_RESIDENTS
 } from '../data/buildingConfig';
 
 export type DesignTheme = 'atelier' | 'vision';
@@ -55,14 +56,18 @@ interface PGContextType {
   getResidentById: (residentId: string) => Resident | undefined;
 }
 
-const STORAGE_KEY_RESIDENTS = 'atelier_pg_residents_v3';
-const STORAGE_KEY_PAYMENTS = 'atelier_pg_payments_v3';
-const STORAGE_KEY_ACTIVITIES = 'atelier_pg_activities_v3';
+const STORAGE_KEY_RESIDENTS = 'atelier_pg_residents_v4';
+const STORAGE_KEY_PAYMENTS = 'atelier_pg_payments_v4';
+const STORAGE_KEY_ACTIVITIES = 'atelier_pg_activities_v4';
 const STORAGE_KEY_THEME = 'atelier_pg_theme_v1';
 
 const PGContext = createContext<PGContextType | undefined>(undefined);
 
-const ALL_INITIAL_RESIDENTS = [...INITIAL_1ST_FLOOR_RESIDENTS, ...INITIAL_2ND_FLOOR_RESIDENTS];
+const ALL_INITIAL_RESIDENTS = [
+  ...INITIAL_1ST_FLOOR_RESIDENTS,
+  ...INITIAL_2ND_FLOOR_RESIDENTS,
+  ...INITIAL_3RD_FLOOR_RESIDENTS
+];
 
 export const PGProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [theme, setThemeState] = useState<DesignTheme>(() => {
