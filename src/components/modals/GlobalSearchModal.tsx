@@ -33,15 +33,23 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({
   if (!isOpen) return null;
 
   const trimmedQuery = query.toLowerCase().trim();
+  const normalizedQuery = trimmedQuery.replace(/[\s\-_]/g, '');
 
-  // Search Rooms matching query (e.g., "410")
+  // Search Rooms matching query (e.g., "410", "3 sharing", "3-sharing", "4-sharing")
   const matchingRooms: Array<{ room: any; floor: any }> = [];
   if (trimmedQuery) {
     floors.forEach((floor) => {
       floor.rooms.forEach((room) => {
+        const cap = room.sharingCapacity;
+        const sharingStr = `${cap}sharing ${cap}share ${cap}bed ${cap}seater ${cap}person`;
+        const floorStr = floor.name.toLowerCase();
+        const roomStr = room.roomNumber.toLowerCase();
+
         if (
-          room.roomNumber.toLowerCase().includes(trimmedQuery) ||
-          floor.name.toLowerCase().includes(trimmedQuery)
+          roomStr.includes(trimmedQuery) ||
+          floorStr.includes(trimmedQuery) ||
+          sharingStr.includes(normalizedQuery) ||
+          (normalizedQuery === `${cap}`)
         ) {
           matchingRooms.push({ room, floor });
         }
@@ -51,12 +59,18 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({
 
   // Search Residents matching query
   const matchingResidents = trimmedQuery
-    ? residents.filter(
-        (r) =>
+    ? residents.filter((r) => {
+        const roomObj = floors.flatMap((f) => f.rooms).find((rm) => rm.roomNumber === r.roomNumber);
+        const cap = roomObj?.sharingCapacity;
+        const sharingStr = cap ? `${cap}sharing ${cap}share ${cap}bed ${cap}seater` : '';
+
+        return (
           r.fullName.toLowerCase().includes(trimmedQuery) ||
           r.phone.includes(trimmedQuery) ||
-          r.roomNumber.toLowerCase().includes(trimmedQuery)
-      )
+          r.roomNumber.toLowerCase().includes(trimmedQuery) ||
+          (cap && sharingStr.includes(normalizedQuery))
+        );
+      })
     : [];
 
   const handleOpenEmptyBeds = () => {

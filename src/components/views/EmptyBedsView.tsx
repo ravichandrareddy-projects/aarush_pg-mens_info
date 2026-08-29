@@ -48,11 +48,15 @@ export const EmptyBedsView: React.FC<EmptyBedsViewProps> = ({ onOpenAddResidentF
 
     // Search query
     const q = searchQuery.toLowerCase().trim();
+    const normalizedQ = q.replace(/[\s\-_]/g, '');
     if (q) {
       const matchRoom = bed.roomNumber.toLowerCase().includes(q);
       const matchBed = bed.id.toLowerCase().includes(q);
       const matchFloor = bed.floorName.toLowerCase().includes(q);
-      if (!matchRoom && !matchBed && !matchFloor) return false;
+      const sharingStr = `${sharingCap}sharing ${sharingCap}share ${sharingCap}bed ${sharingCap}seater`;
+      const matchSharing = sharingCap ? sharingStr.includes(normalizedQ) : false;
+
+      if (!matchRoom && !matchBed && !matchFloor && !matchSharing) return false;
     }
 
     return true;

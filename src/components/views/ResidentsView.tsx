@@ -28,15 +28,23 @@ export const ResidentsView: React.FC<ResidentsViewProps> = ({ onOpenAddResident,
   const [statusFilter, setStatusFilter] = useState<'ACTIVE' | 'LEFT' | 'ALL'>('ACTIVE');
 
   // Filter residents
+  const { floors } = usePG();
   const filteredResidents = residents.filter((res) => {
     const matchesStatus = statusFilter === 'ALL' || res.status === statusFilter;
     const query = searchQuery.toLowerCase().trim();
+    const normalizedQuery = query.replace(/[\s\-_]/g, '');
+
+    const roomObj = floors.flatMap((f) => f.rooms).find((rm) => rm.roomNumber === res.roomNumber);
+    const cap = roomObj?.sharingCapacity;
+    const sharingStr = cap ? `${cap}sharing ${cap}share ${cap}bed ${cap}seater` : '';
+
     const matchesQuery =
       !query ||
       res.fullName.toLowerCase().includes(query) ||
-      res.phone.toLowerCase().includes(query) ||
+      res.phone.includes(query) ||
       res.roomNumber.toLowerCase().includes(query) ||
-      res.aadhaarNumber.includes(query);
+      res.aadhaarNumber.includes(query) ||
+      (cap && sharingStr.includes(normalizedQuery));
     return matchesStatus && matchesQuery;
   });
 
