@@ -54,15 +54,28 @@ export const AddResidentModal: React.FC<AddResidentModalProps> = ({
     }
   }, [isOpen, initialFloorId, initialRoomId, initialBedId]);
 
-  if (!isOpen) return null;
-
   // Selected Floor & Room objects
   const selectedFloor = floors.find((f) => f.id === floorId);
+  const selectedRoom = selectedFloor?.rooms.find((r) => r.id === roomId);
+
+  // Auto-set rent based on room sharing type: 3-sharing = 8000, 4-sharing = 7500, 5-sharing = 7000
+  useEffect(() => {
+    if (selectedRoom) {
+      let defaultRent = 7500;
+      if (selectedRoom.sharingCapacity === 3) defaultRent = 8000;
+      else if (selectedRoom.sharingCapacity === 4) defaultRent = 7500;
+      else if (selectedRoom.sharingCapacity === 5) defaultRent = 7000;
+      setMonthlyRent(defaultRent);
+      setAmountPaid(defaultRent);
+    }
+  }, [roomId, selectedRoom?.sharingCapacity]);
+
+  if (!isOpen) return null;
+
   const availableRooms = selectedFloor
     ? selectedFloor.rooms.filter((r) => r.beds.some((b) => b.status === 'EMPTY'))
     : [];
 
-  const selectedRoom = selectedFloor?.rooms.find((r) => r.id === roomId);
   const availableBeds = selectedRoom
     ? selectedRoom.beds.filter((b) => b.status === 'EMPTY')
     : [];
