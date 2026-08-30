@@ -1,5 +1,5 @@
 import { supabase, isSupabaseConfigured } from './supabase';
-import { Resident, PaymentRecord } from '../types/pg';
+import { Resident, Payment } from '../types/pg';
 
 /**
  * Sync resident records to remote Supabase DB
@@ -11,10 +11,9 @@ export async function syncResidentsToSupabase(residents: Resident[]) {
     const payload = residents.map((r) => ({
       full_name: r.fullName,
       phone: r.phone,
-      email: r.email || null,
       aadhaar_number: r.aadhaarNumber,
       floor_id: r.floorId,
-      floor_name: r.floorName,
+      floor_name: `Floor ${r.floorId}`,
       room_id: r.roomId,
       room_number: r.roomNumber,
       bed_id: r.bedId,
@@ -22,8 +21,10 @@ export async function syncResidentsToSupabase(residents: Resident[]) {
       monthly_rent: r.monthlyRent,
       joining_date: r.joiningDate,
       status: r.status,
-      checkout_date: r.checkoutDate || null,
-      notes: r.notes || null
+      checkout_date: r.leavingDate || null,
+      permanent_address: r.address || null,
+      emergency_contact_name: r.emergencyName || null,
+      emergency_contact_phone: r.emergencyPhone || null
     }));
 
     const { error } = await supabase.from('residents').upsert(payload);
@@ -40,7 +41,7 @@ export async function syncResidentsToSupabase(residents: Resident[]) {
 /**
  * Sync payment transactions to remote Supabase DB
  */
-export async function syncPaymentsToSupabase(payments: PaymentRecord[]) {
+export async function syncPaymentsToSupabase(payments: Payment[]) {
   if (!isSupabaseConfigured || !supabase) return;
 
   try {
@@ -49,9 +50,6 @@ export async function syncPaymentsToSupabase(payments: PaymentRecord[]) {
       amount_paid: p.amountPaid,
       payment_method: p.paymentMethod,
       payment_date: p.paymentDate,
-      period_month: p.periodMonth,
-      period_year: p.periodYear,
-      receipt_number: p.receiptNumber,
       notes: p.notes || null
     }));
 
