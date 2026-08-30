@@ -19,15 +19,30 @@ import { formatDayAndYear } from '../../utils/dateUtils';
 interface FloorsRoomsViewProps {
   onOpenAddResidentForBed: (floorId: string, roomId: string, bedId: string) => void;
   onViewResident: (residentId: string) => void;
+  selectedFloorId?: string | null;
+  setSelectedFloorId?: (id: string | null) => void;
+  selectedRoomId?: string | null;
+  setSelectedRoomId?: (id: string | null) => void;
 }
 
 export const FloorsRoomsView: React.FC<FloorsRoomsViewProps> = ({
   onOpenAddResidentForBed,
-  onViewResident
+  onViewResident,
+  selectedFloorId: propFloorId,
+  setSelectedFloorId: propSetFloorId,
+  selectedRoomId: propRoomId,
+  setSelectedRoomId: propSetRoomId
 }) => {
   const { floors, theme, getResidentById, togglePaymentStatus } = usePG();
-  const [selectedFloorId, setSelectedFloorId] = useState<string | null>(null);
-  const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
+  const [localFloorId, setLocalFloorId] = useState<string | null>(null);
+  const [localRoomId, setLocalRoomId] = useState<string | null>(null);
+
+  const selectedFloorId = propFloorId !== undefined ? propFloorId : localFloorId;
+  const setSelectedFloorId = propSetFloorId || setLocalFloorId;
+
+  const selectedRoomId = propRoomId !== undefined ? propRoomId : localRoomId;
+  const setSelectedRoomId = propSetRoomId || setLocalRoomId;
+
   const [sharingFilter, setSharingFilter] = useState<'ALL' | 3 | 4 | 5>('ALL');
 
   const selectedFloor = floors.find((f) => f.id === selectedFloorId);

@@ -12,6 +12,8 @@ import { PaymentsView } from './components/views/PaymentsView';
 import { ReportsView } from './components/views/ReportsView';
 import { SettingsView } from './components/views/SettingsView';
 
+import { App as CapApp } from '@capacitor/app';
+
 import { AddResidentModal } from './components/modals/AddResidentModal';
 import { ResidentProfileModal } from './components/modals/ResidentProfileModal';
 import { MoveResidentModal } from './components/modals/MoveResidentModal';
@@ -22,6 +24,10 @@ import { GlobalSearchModal } from './components/modals/GlobalSearchModal';
 const MainAppContent: React.FC = () => {
   const { theme } = usePG();
   const [activeTab, setActiveTab] = useState<NavTab>('dashboard');
+
+  // Controlled Floors & Rooms drill-down state for back navigation
+  const [selectedFloorId, setSelectedFloorId] = useState<string | null>(null);
+  const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
 
   // Modals state
   const [isAddResidentOpen, setIsAddResidentOpen] = useState(false);
@@ -39,6 +45,94 @@ const MainAppContent: React.FC = () => {
   const [recordPaymentResidentId, setRecordPaymentResidentId] = useState<string | undefined>();
 
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+
+  // Android Hardware Back Button & Browser PopState Navigation Handler
+  useEffect(() => {
+    window.history.pushState({ appState: true }, '');
+
+    const handleBack = (): boolean => {
+      // 1. Close Open Modals
+      if (isSearchOpen) {
+        setIsSearchOpen(false);
+        return true;
+      }
+      if (selectedResidentId) {
+        setSelectedResidentId(null);
+        return true;
+      }
+      if (moveResidentId) {
+        setMoveResidentId(null);
+        return true;
+      }
+      if (markLeftResidentId) {
+        setMarkLeftResidentId(null);
+        return true;
+      }
+      if (isRecordPaymentOpen) {
+        setIsRecordPaymentOpen(false);
+        return true;
+      }
+      if (isAddResidentOpen) {
+        setIsAddResidentOpen(false);
+        return true;
+      }
+
+      // 2. Room Detail (e.g. 101) -> Floor Rooms List (e.g. 1st Floor) -> All Floors
+      if (activeTab === 'floors') {
+        if (selectedRoomId !== null) {
+          setSelectedRoomId(null);
+          return true;
+        }
+        if (selectedFloorId !== null) {
+          setSelectedFloorId(null);
+          return true;
+        }
+        // If at top of floors view, return to Home screen
+        setActiveTab('dashboard');
+        return true;
+      }
+
+      // 3. Any non-dashboard tab -> return to Home Screen (Dashboard)
+      if (activeTab !== 'dashboard') {
+        setActiveTab('dashboard');
+        return true;
+      }
+
+      // 4. On Home screen with no modals or drilldowns open -> exit/minimize app
+      return false;
+    };
+
+    const backListener = CapApp.addListener('backButton', () => {
+      const handled = handleBack();
+      if (!handled) {
+        CapApp.exitApp();
+      }
+    });
+
+    const handlePopState = () => {
+      const handled = handleBack();
+      if (handled) {
+        window.history.pushState({ appState: true }, '');
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+
+    return () => {
+      backListener.then((h) => h.remove());
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, [
+    isSearchOpen,
+    selectedResidentId,
+    moveResidentId,
+    markLeftResidentId,
+    isRecordPaymentOpen,
+    isAddResidentOpen,
+    activeTab,
+    selectedFloorId,
+    selectedRoomId
+  ]);
 
   // Keyboard shortcut Ctrl+K / Cmd+K for search
   useEffect(() => {
@@ -100,6 +194,10 @@ const MainAppContent: React.FC = () => {
             <FloorsRoomsView
               onOpenAddResidentForBed={handleOpenAddResidentForBed}
               onViewResident={(resId) => setSelectedResidentId(resId)}
+              selectedFloorId={selectedFloorId}
+              setSelectedFloorId={setSelectedFloorId}
+              selectedRoomId={selectedRoomId}
+              setSelectedRoomId={setSelectedRoomId}
             />
           )}
 
