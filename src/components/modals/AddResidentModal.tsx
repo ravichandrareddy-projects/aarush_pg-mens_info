@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, UserPlus, Upload, ShieldCheck, Check } from 'lucide-react';
 import { usePG } from '../../context/PGContext';
 import { Payment } from '../../types/pg';
+import { uploadResidentPhoto, uploadAadhaarDocument } from '../../lib/supabaseStorage';
 
 interface AddResidentModalProps {
   isOpen: boolean;
@@ -25,9 +26,12 @@ export const AddResidentModal: React.FC<AddResidentModalProps> = ({
   const [phone, setPhone] = useState('');
   const [dateOfBirth, setDateOfBirth] = useState('');
   const [photoPreview, setPhotoPreview] = useState<string | undefined>();
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
 
   const [aadhaarNumber, setAadhaarNumber] = useState('');
   const [aadhaarDocName, setAadhaarDocName] = useState<string | undefined>();
+  const [aadhaarDocUrl, setAadhaarDocUrl] = useState<string | undefined>();
+  const [isUploadingAadhaar, setIsUploadingAadhaar] = useState(false);
 
   const [address, setAddress] = useState('');
 
@@ -105,7 +109,7 @@ export const AddResidentModal: React.FC<AddResidentModalProps> = ({
       dateOfBirth: dateOfBirth || undefined,
       photoUrl: photoPreview,
       aadhaarNumber: aadhaarNumber || '000000000000',
-      aadhaarDocumentUrl: aadhaarDocName,
+      aadhaarDocumentUrl: aadhaarDocUrl || aadhaarDocName,
       address: address || 'N/A',
       floorId,
       roomId,
@@ -338,20 +342,35 @@ export const AddResidentModal: React.FC<AddResidentModalProps> = ({
 
               <div>
                 <label className="block text-[#181919] font-medium mb-1">Aadhaar Card Upload</label>
-                <div className="relative border border-dashed border-[#E4E2E2] bg-[#FDFBF7] p-2 rounded-lg text-center cursor-pointer hover:border-[#181919]">
+                <div className="relative border border-dashed border-[#E4E2E2] bg-[#FDFBF7] p-2.5 rounded-lg text-center cursor-pointer hover:border-[#181919]">
                   <input
                     type="file"
                     accept="image/*,.pdf"
-                    onChange={(e) => {
+                    onChange={async (e) => {
                       if (e.target.files && e.target.files[0]) {
-                        setAadhaarDocName(e.target.files[0].name);
+                        const file = e.target.files[0];
+                        setAadhaarDocName(file.name);
+                        setIsUploadingAadhaar(true);
+                        const uploadedUrl = await uploadAadhaarDocument(file, file.name);
+                        if (uploadedUrl) {
+                          setAadhaarDocUrl(uploadedUrl);
+                        }
+                        setIsUploadingAadhaar(false);
                       }
                     }}
                     className="absolute inset-0 opacity-0 cursor-pointer"
                   />
-                  <div className="flex items-center justify-center gap-2 text-[#747878] text-xs">
+                  <div className="flex items-center justify-center gap-2 text-[#747878] text-xs font-mono">
                     <Upload className="w-4 h-4 text-[#536347]" />
-                    <span>{aadhaarDocName ? aadhaarDocName : 'Upload Aadhaar PDF/Image'}</span>
+                    <span>
+                      {isUploadingAadhaar
+                        ? 'Uploading to Supabase Storage...'
+                        : aadhaarDocUrl
+                        ? `✓ Saved in Supabase (${aadhaarDocName})`
+                        : aadhaarDocName
+                        ? aadhaarDocName
+                        : 'Upload Aadhaar PDF/Image'}
+                    </span>
                   </div>
                 </div>
               </div>

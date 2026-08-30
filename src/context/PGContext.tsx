@@ -114,15 +114,13 @@ export const PGProvider: React.FC<{ children: React.ReactNode }> = ({ children }
     localStorage.setItem(STORAGE_KEY_THEME, newTheme);
   };
 
-  // Save to localStorage whenever residents, payments, activities change
+  // Permanent local storage persistence for residents, payments, activities
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY_RESIDENTS, JSON.stringify(residents));
-    syncResidentsToSupabase(residents);
   }, [residents]);
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY_PAYMENTS, JSON.stringify(payments));
-    syncPaymentsToSupabase(payments);
   }, [payments]);
 
   useEffect(() => {
