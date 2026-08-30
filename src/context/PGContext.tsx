@@ -13,7 +13,9 @@ import {
   INITIAL_GROUND_FLOOR_RESIDENTS,
   INITIAL_1ST_FLOOR_RESIDENTS,
   INITIAL_2ND_FLOOR_RESIDENTS,
-  INITIAL_3RD_FLOOR_RESIDENTS
+  INITIAL_3RD_FLOOR_RESIDENTS,
+  INITIAL_5TH_FLOOR_RESIDENTS,
+  INITIAL_6TH_FLOOR_RESIDENTS
 } from '../data/buildingConfig';
 
 export type DesignTheme = 'atelier' | 'vision';
@@ -58,9 +60,9 @@ interface PGContextType {
   getResidentById: (residentId: string) => Resident | undefined;
 }
 
-const STORAGE_KEY_RESIDENTS = 'atelier_pg_residents_v6';
-const STORAGE_KEY_PAYMENTS = 'atelier_pg_payments_v6';
-const STORAGE_KEY_ACTIVITIES = 'atelier_pg_activities_v6';
+const STORAGE_KEY_RESIDENTS = 'atelier_pg_residents_v7';
+const STORAGE_KEY_PAYMENTS = 'atelier_pg_payments_v7';
+const STORAGE_KEY_ACTIVITIES = 'atelier_pg_activities_v7';
 const STORAGE_KEY_THEME = 'atelier_pg_theme_v1';
 
 const PGContext = createContext<PGContextType | undefined>(undefined);
@@ -69,7 +71,9 @@ const ALL_INITIAL_RESIDENTS = [
   ...INITIAL_GROUND_FLOOR_RESIDENTS,
   ...INITIAL_1ST_FLOOR_RESIDENTS,
   ...INITIAL_2ND_FLOOR_RESIDENTS,
-  ...INITIAL_3RD_FLOOR_RESIDENTS
+  ...INITIAL_3RD_FLOOR_RESIDENTS,
+  ...INITIAL_5TH_FLOOR_RESIDENTS,
+  ...INITIAL_6TH_FLOOR_RESIDENTS
 ];
 
 export const PGProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
