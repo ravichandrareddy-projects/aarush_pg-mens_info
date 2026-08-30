@@ -17,6 +17,7 @@ import {
   INITIAL_5TH_FLOOR_RESIDENTS,
   INITIAL_6TH_FLOOR_RESIDENTS
 } from '../data/buildingConfig';
+import { syncResidentsToSupabase, syncPaymentsToSupabase } from '../lib/supabaseSync';
 
 export type DesignTheme = 'atelier' | 'vision';
 
@@ -116,10 +117,12 @@ export const PGProvider: React.FC<{ children: React.ReactNode }> = ({ children }
   // Save to localStorage whenever residents, payments, activities change
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY_RESIDENTS, JSON.stringify(residents));
+    syncResidentsToSupabase(residents);
   }, [residents]);
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY_PAYMENTS, JSON.stringify(payments));
+    syncPaymentsToSupabase(payments);
   }, [payments]);
 
   useEffect(() => {
