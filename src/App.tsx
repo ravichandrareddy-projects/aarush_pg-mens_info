@@ -76,11 +76,37 @@ const MainAppContent: React.FC = () => {
 
   const [isSearchOpen, setIsSearchOpen] = useState(false);
 
+  // Continuously push history state whenever navigation/modal state changes
+  useEffect(() => {
+    window.history.pushState(
+      {
+        activeTab,
+        selectedFloorId,
+        selectedRoomId,
+        isSearchOpen,
+        selectedResidentId,
+        isAddResidentOpen,
+        isRecordPaymentOpen,
+        moveResidentId,
+        markLeftResidentId
+      },
+      ''
+    );
+  }, [
+    activeTab,
+    selectedFloorId,
+    selectedRoomId,
+    isSearchOpen,
+    selectedResidentId,
+    isAddResidentOpen,
+    isRecordPaymentOpen,
+    moveResidentId,
+    markLeftResidentId
+  ]);
+
   // Android Hardware Back Button & Browser PopState Navigation Handler
   useEffect(() => {
-    window.history.pushState({ appState: true }, '');
-
-    const handleBack = (): boolean => {
+    const handleBackStep = (): boolean => {
       // 1. Close Open Modals
       if (isSearchOpen) {
         setIsSearchOpen(false);
@@ -107,7 +133,7 @@ const MainAppContent: React.FC = () => {
         return true;
       }
 
-      // 2. Room Detail (e.g. 101) -> Floor Rooms List (e.g. 1st Floor) -> All Floors
+      // 2. Room Detail (e.g. Room 101) -> Floor Rooms List (e.g. 1st Floor) -> All Floors
       if (activeTab === 'floors') {
         if (selectedRoomId !== null) {
           setSelectedRoomId(null);
@@ -117,14 +143,14 @@ const MainAppContent: React.FC = () => {
           setSelectedFloorId(null);
           return true;
         }
-        // If at top of floors view, return to Home screen
-        setActiveTab('dashboard');
+        // If at top of floors view (All Floors grid), return to Home screen
+        handleSetActiveTab('dashboard');
         return true;
       }
 
       // 3. Any non-dashboard tab -> return to Home Screen (Dashboard)
       if (activeTab !== 'dashboard') {
-        setActiveTab('dashboard');
+        handleSetActiveTab('dashboard');
         return true;
       }
 
@@ -133,17 +159,14 @@ const MainAppContent: React.FC = () => {
     };
 
     const backListener = CapApp.addListener('backButton', () => {
-      const handled = handleBack();
+      const handled = handleBackStep();
       if (!handled) {
         CapApp.exitApp();
       }
     });
 
-    const handlePopState = () => {
-      const handled = handleBack();
-      if (handled) {
-        window.history.pushState({ appState: true }, '');
-      }
+    const handlePopState = (e: PopStateEvent) => {
+      handleBackStep();
     };
 
     window.addEventListener('popstate', handlePopState);
@@ -161,7 +184,8 @@ const MainAppContent: React.FC = () => {
     isAddResidentOpen,
     activeTab,
     selectedFloorId,
-    selectedRoomId
+    selectedRoomId,
+    handleSetActiveTab
   ]);
 
   // Keyboard shortcut Ctrl+K / Cmd+K for search
