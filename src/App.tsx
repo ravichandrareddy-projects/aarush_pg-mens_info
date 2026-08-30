@@ -47,7 +47,7 @@ const MainAppContent: React.FC = () => {
   const [selectedFloorId, setSelectedFloorId] = useState<string | null>(null);
   const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
 
-  // Tab change handler with 2 seconds screen transition loader
+  // Tab change handler with 1 second screen transition loader
   const handleSetActiveTab = (newTab: NavTab) => {
     if (newTab !== activeTab) {
       setLoadingTabTitle(tabTitles[newTab] || 'Screen');
@@ -55,7 +55,7 @@ const MainAppContent: React.FC = () => {
       setActiveTab(newTab);
       setTimeout(() => {
         setIsTabLoading(false);
-      }, 2000);
+      }, 1000);
     }
   };
 
@@ -133,28 +133,15 @@ const MainAppContent: React.FC = () => {
         return true;
       }
 
-      // 2. Room Detail (e.g. Room 101) -> Floor Rooms List (e.g. 1st Floor) -> All Floors
-      if (activeTab === 'floors') {
-        if (selectedRoomId !== null) {
-          setSelectedRoomId(null);
-          return true;
-        }
-        if (selectedFloorId !== null) {
-          setSelectedFloorId(null);
-          return true;
-        }
-        // If at top of floors view (All Floors grid), return to Home screen
+      // 2. If on ANY screen/room/floor other than Home Screen ('dashboard') -> Return to Home Screen
+      if (activeTab !== 'dashboard' || selectedFloorId !== null || selectedRoomId !== null) {
+        setSelectedFloorId(null);
+        setSelectedRoomId(null);
         handleSetActiveTab('dashboard');
         return true;
       }
 
-      // 3. Any non-dashboard tab -> return to Home Screen (Dashboard)
-      if (activeTab !== 'dashboard') {
-        handleSetActiveTab('dashboard');
-        return true;
-      }
-
-      // 4. On Home screen with no modals or drilldowns open -> exit/minimize app
+      // 3. Already on Home Screen ('dashboard') with no modals -> Exit / Close App
       return false;
     };
 
