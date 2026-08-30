@@ -21,13 +21,43 @@ import { MarkLeftModal } from './components/modals/MarkLeftModal';
 import { RecordPaymentModal } from './components/modals/RecordPaymentModal';
 import { GlobalSearchModal } from './components/modals/GlobalSearchModal';
 
+import { InitialSplashScreen, ScreenTransitionLoader } from './components/layout/LoadingScreens';
+
+const tabTitles: Record<NavTab, string> = {
+  dashboard: 'Dashboard',
+  floors: 'Floors & Rooms',
+  residents: 'Residents Directory',
+  'empty-beds': 'Empty Beds Explorer',
+  payments: 'Payments & Revenue',
+  reports: 'Analytics & Reports',
+  settings: 'Settings'
+};
+
 const MainAppContent: React.FC = () => {
   const { theme } = usePG();
+
+  // App Loading States
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
+  const [isTabLoading, setIsTabLoading] = useState(false);
+  const [loadingTabTitle, setLoadingTabTitle] = useState('Dashboard');
+
   const [activeTab, setActiveTab] = useState<NavTab>('dashboard');
 
   // Controlled Floors & Rooms drill-down state for back navigation
   const [selectedFloorId, setSelectedFloorId] = useState<string | null>(null);
   const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
+
+  // Tab change handler with 2 seconds screen transition loader
+  const handleSetActiveTab = (newTab: NavTab) => {
+    if (newTab !== activeTab) {
+      setLoadingTabTitle(tabTitles[newTab] || 'Screen');
+      setIsTabLoading(true);
+      setActiveTab(newTab);
+      setTimeout(() => {
+        setIsTabLoading(false);
+      }, 2000);
+    }
+  };
 
   // Modals state
   const [isAddResidentOpen, setIsAddResidentOpen] = useState(false);
@@ -161,6 +191,10 @@ const MainAppContent: React.FC = () => {
     setIsRecordPaymentOpen(true);
   };
 
+  if (isInitialLoading) {
+    return <InitialSplashScreen onFinish={() => setIsInitialLoading(false)} />;
+  }
+
   return (
     <div className={`min-h-screen flex flex-col md:flex-row transition-colors ${
       theme === 'atelier' ? 'bg-[#FDFBF7] text-[#181919]' : 'bg-[#F8F9FA] text-[#181919]'
@@ -168,7 +202,7 @@ const MainAppContent: React.FC = () => {
       {/* Desktop Left Sidebar Navigation */}
       <Sidebar
         activeTab={activeTab}
-        setActiveTab={setActiveTab}
+        setActiveTab={handleSetActiveTab}
         onOpenAddResident={handleOpenAddResident}
       />
 
@@ -183,54 +217,60 @@ const MainAppContent: React.FC = () => {
 
         {/* Content Canvas */}
         <main className="flex-1 p-4 md:p-8 max-w-7xl w-full mx-auto">
-          {activeTab === 'dashboard' && (
-            <DashboardView
-              onOpenAddResident={handleOpenAddResident}
-              setActiveTab={setActiveTab}
-            />
+          {isTabLoading ? (
+            <ScreenTransitionLoader screenTitle={loadingTabTitle} />
+          ) : (
+            <>
+              {activeTab === 'dashboard' && (
+                <DashboardView
+                  onOpenAddResident={handleOpenAddResident}
+                  setActiveTab={handleSetActiveTab}
+                />
+              )}
+
+              {activeTab === 'floors' && (
+                <FloorsRoomsView
+                  onOpenAddResidentForBed={handleOpenAddResidentForBed}
+                  onViewResident={(resId) => setSelectedResidentId(resId)}
+                  selectedFloorId={selectedFloorId}
+                  setSelectedFloorId={setSelectedFloorId}
+                  selectedRoomId={selectedRoomId}
+                  setSelectedRoomId={setSelectedRoomId}
+                />
+              )}
+
+              {activeTab === 'residents' && (
+                <ResidentsView
+                  onOpenAddResident={handleOpenAddResident}
+                  onSelectResident={(resId) => setSelectedResidentId(resId)}
+                />
+              )}
+
+              {activeTab === 'empty-beds' && (
+                <EmptyBedsView
+                  onOpenAddResidentForBed={handleOpenAddResidentForBed}
+                />
+              )}
+
+              {activeTab === 'payments' && (
+                <PaymentsView
+                  onOpenRecordPayment={handleOpenRecordPayment}
+                  onViewResident={(resId) => setSelectedResidentId(resId)}
+                />
+              )}
+
+              {activeTab === 'reports' && <ReportsView />}
+
+              {activeTab === 'settings' && <SettingsView />}
+            </>
           )}
-
-          {activeTab === 'floors' && (
-            <FloorsRoomsView
-              onOpenAddResidentForBed={handleOpenAddResidentForBed}
-              onViewResident={(resId) => setSelectedResidentId(resId)}
-              selectedFloorId={selectedFloorId}
-              setSelectedFloorId={setSelectedFloorId}
-              selectedRoomId={selectedRoomId}
-              setSelectedRoomId={setSelectedRoomId}
-            />
-          )}
-
-          {activeTab === 'residents' && (
-            <ResidentsView
-              onOpenAddResident={handleOpenAddResident}
-              onSelectResident={(resId) => setSelectedResidentId(resId)}
-            />
-          )}
-
-          {activeTab === 'empty-beds' && (
-            <EmptyBedsView
-              onOpenAddResidentForBed={handleOpenAddResidentForBed}
-            />
-          )}
-
-          {activeTab === 'payments' && (
-            <PaymentsView
-              onOpenRecordPayment={handleOpenRecordPayment}
-              onViewResident={(resId) => setSelectedResidentId(resId)}
-            />
-          )}
-
-          {activeTab === 'reports' && <ReportsView />}
-
-          {activeTab === 'settings' && <SettingsView />}
         </main>
       </div>
 
       {/* Mobile Bottom Navigation Bar (Fixed on mobile < 768px) */}
       <MobileNav
         activeTab={activeTab}
-        setActiveTab={setActiveTab}
+        setActiveTab={handleSetActiveTab}
         onOpenAddResident={handleOpenAddResident}
       />
 
@@ -270,7 +310,7 @@ const MainAppContent: React.FC = () => {
       <GlobalSearchModal
         isOpen={isSearchOpen}
         onClose={() => setIsSearchOpen(false)}
-        setActiveTab={setActiveTab}
+        setActiveTab={handleSetActiveTab}
         onSelectResident={(id) => setSelectedResidentId(id)}
       />
     </div>
