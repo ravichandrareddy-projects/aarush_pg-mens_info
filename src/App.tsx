@@ -133,15 +133,25 @@ const MainAppContent: React.FC = () => {
         return true;
       }
 
-      // 2. If on ANY screen/room/floor other than Home Screen ('dashboard') -> Return to Home Screen
-      if (activeTab !== 'dashboard' || selectedFloorId !== null || selectedRoomId !== null) {
-        setSelectedFloorId(null);
+      // 2. Room Detail (e.g. Room 101) -> Floor Rooms List (e.g. 1st Floor rooms list)
+      if (activeTab === 'floors' && selectedRoomId !== null) {
         setSelectedRoomId(null);
+        return true;
+      }
+
+      // 3. Floor Rooms List -> All Floors Grid (e.g. 1st Floor rooms list -> All Floors grid)
+      if (activeTab === 'floors' && selectedFloorId !== null) {
+        setSelectedFloorId(null);
+        return true;
+      }
+
+      // 4. Any tab/screen other than Home Screen ('dashboard') -> Return to Home Screen
+      if (activeTab !== 'dashboard') {
         handleSetActiveTab('dashboard');
         return true;
       }
 
-      // 3. Already on Home Screen ('dashboard') with no modals -> Exit / Close App
+      // 5. Already on Home Screen ('dashboard') with no drilldowns or modals open -> Exit / Close App
       return false;
     };
 
