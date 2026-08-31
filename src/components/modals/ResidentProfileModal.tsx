@@ -36,6 +36,7 @@ export const ResidentProfileModal: React.FC<ResidentProfileModalProps> = ({
 }) => {
   const { getResidentById, payments, activities } = usePG();
   const [activeTab, setActiveTab] = useState<'INFO' | 'PAYMENTS' | 'DOCS' | 'HISTORY'>('INFO');
+  const [showFullAadhaar, setShowFullAadhaar] = useState(false);
 
   if (!residentId) return null;
   const resident = getResidentById(residentId);
@@ -251,22 +252,105 @@ export const ResidentProfileModal: React.FC<ResidentProfileModalProps> = ({
 
           {activeTab === 'DOCS' && (
             <div className="space-y-4 text-xs">
-              <div className="p-4 rounded-xl border border-[#F5F2ED] space-y-2">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <ShieldCheck className="w-5 h-5 text-[#536347]" />
-                    <span className="font-semibold text-sm text-[#181919]">Aadhaar Verification</span>
+              {/* Resident Photo & Identity Card */}
+              <div className="p-4 rounded-xl border border-[#F5F2ED] bg-[#FDFBF7] flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  {resident.photoUrl ? (
+                    <img
+                      src={resident.photoUrl}
+                      alt={resident.fullName}
+                      className="w-14 h-14 rounded-full object-cover border border-[#181919] shadow-subtle"
+                    />
+                  ) : (
+                    <div className="w-14 h-14 rounded-full bg-[#181919] text-white flex items-center justify-center font-bold text-xl">
+                      {resident.fullName.charAt(0)}
+                    </div>
+                  )}
+                  <div>
+                    <h4 className="font-bold text-sm text-[#181919]">{resident.fullName}</h4>
+                    <p className="text-xs text-[#747878] font-mono">Phone: {resident.phone}</p>
+                    <p className="text-[10px] text-[#747878] font-mono">Room {resident.roomNumber} • Bed {resident.bedNumber}</p>
                   </div>
-                  <span className="text-[10px] font-mono bg-[#F2F7EE] text-[#536347] px-2 py-0.5 rounded font-semibold">
-                    MASKED DISPLAY
+                </div>
+
+                {resident.photoUrl && (
+                  <a
+                    href={resident.photoUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="py-1.5 px-3 rounded-lg border border-[#E4E2E2] bg-white text-[#181919] font-mono text-[11px] font-semibold hover:bg-[#F5F3F3] transition-colors"
+                  >
+                    View Photo ↗
+                  </a>
+                )}
+              </div>
+
+              {/* Aadhaar Verification & Document Card */}
+              <div className="p-5 rounded-xl border border-[#F5F2ED] bg-white space-y-4 shadow-xs">
+                <div className="flex items-center justify-between border-b border-[#F5F2ED] pb-3">
+                  <div className="flex items-center gap-2">
+                    <ShieldCheck className="w-5 h-5 text-emerald-600" />
+                    <div>
+                      <span className="font-bold text-sm text-[#181919]">Official Aadhaar Document</span>
+                      <p className="text-[10px] text-[#747878] font-mono">Saved in Supabase Cloud Storage</p>
+                    </div>
+                  </div>
+                  <span className="text-[10px] font-mono bg-emerald-100 text-emerald-800 px-2.5 py-1 rounded-full font-bold">
+                    VERIFIED
                   </span>
                 </div>
-                <p className="font-mono text-sm text-[#181919] pt-1">
-                  {maskAadhaar(resident.aadhaarNumber)}
-                </p>
-                <p className="text-[11px] text-[#747878]">
-                  Document file: {resident.aadhaarDocumentUrl ? resident.aadhaarDocumentUrl : 'No document attached'}
-                </p>
+
+                <div className="flex items-center justify-between font-mono bg-[#FDFBF7] p-3 rounded-xl border border-[#F5F2ED]">
+                  <div>
+                    <span className="text-[10px] text-[#747878] block uppercase">Aadhaar Number</span>
+                    <span className="font-bold text-sm text-[#181919]">
+                      {showFullAadhaar ? resident.aadhaarNumber || 'Not provided' : maskAadhaar(resident.aadhaarNumber)}
+                    </span>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setShowFullAadhaar(!showFullAadhaar)}
+                    className="text-[11px] text-[#536347] font-semibold hover:underline"
+                  >
+                    {showFullAadhaar ? 'Hide' : 'Show Full Number'}
+                  </button>
+                </div>
+
+                {/* Aadhaar File Preview & Open/Download Actions */}
+                {resident.aadhaarDocumentUrl ? (
+                  <div className="space-y-3 pt-1">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-[#747878] font-mono">Uploaded Document File:</span>
+                      <div className="flex items-center gap-2">
+                        <a
+                          href={resident.aadhaarDocumentUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="py-2 px-3.5 rounded-xl bg-[#181919] text-white font-semibold text-xs hover:bg-black transition-all flex items-center gap-1.5 shadow-xs"
+                        >
+                          <FileText className="w-4 h-4 text-[#A8C393]" />
+                          <span>Open & Download Aadhaar ↗</span>
+                        </a>
+                      </div>
+                    </div>
+
+                    {/* Image Preview if document is image */}
+                    {resident.aadhaarDocumentUrl.match(/\.(jpeg|jpg|gif|png|webp)/i) && (
+                      <div className="p-2 border border-[#F5F2ED] rounded-xl bg-[#FDFBF7] flex justify-center">
+                        <img
+                          src={resident.aadhaarDocumentUrl}
+                          alt="Aadhaar Card Preview"
+                          className="max-h-56 rounded-lg object-contain border border-[#E4E2E2]"
+                        />
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="p-4 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-center text-xs font-mono">
+                    No physical Aadhaar document uploaded yet. Use Room QR Collector to invite resident for self-submission.
+                  </div>
+                )}
               </div>
             </div>
           )}
