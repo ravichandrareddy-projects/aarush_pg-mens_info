@@ -263,3 +263,55 @@ export async function recordSubmissionInSupabase(record: Omit<RemoteSubmissionRe
     console.error('Error saving remote submission:', err);
   }
 }
+
+/**
+ * Permanently delete resident's photo & Aadhaar document files from Supabase Storage buckets
+ * and remove submission entry from manifest.
+ */
+export async function eraseResidentDocumentsFromSupabase(params: {
+  roomNumber: string;
+  residentId?: string;
+  residentName?: string;
+  photoUrl?: string;
+  aadhaarDocumentUrl?: string;
+}) {
+  if (!SUPABASE_URL || !SUPABASE_KEY) return;
+  try {
+    // 1. Delete physical files from Supabase Storage
+    if (params.photoUrl) {
+      const path = extractSupabaseFilePath(params.photoUrl, 'resident-photos');
+      if (path) {
+        console.log(`[Supabase Erase] Deleting photo file: ${path}`);
+        await deleteSupabaseFile('resident-photos', path);
+      }
+    }
+    if (params.aadhaarDocumentUrl) {
+      const path = extractSupabaseFilePath(params.aadhaarDocumentUrl, 'aadhaar-documents');
+      if (path) {
+        console.log(`[Supabase Erase] Deleting Aadhaar document file: ${path}`);
+        await deleteSupabaseFile('aadhaar-documents', path);
+      }
+    }
+
+    // 2. Remove submission record from manifest/submissions.json
+    const existing = await getRemoteSubmissionsFromSupabase();
+    const updated = existing.filter((r) => {
+      if (params.residentId && r.residentId === params.residentId) return false;
+      if (params.residentName && r.roomNumber === params.roomNumber && r.residentName.trim().toLowerCase() === params.residentName.trim().toLowerCase()) return false;
+      if (r.roomNumber === params.roomNumber && !params.residentId && !params.residentName) return false;
+      return true;
+    });
+
+    const blob = new Blob([JSON.stringify(updated, null, 2)], { type: 'application/json' });
+    await uploadToSupabaseBucket('aadhaar-documents', 'manifest/submissions.json', blob);
+
+    // 3. Clear local submission state for that room
+    try {
+      localStorage.removeItem(`aarush_submitted_room_${params.roomNumber}`);
+    } catch {
+      // Ignore localStorage error
+    }
+  } catch (err) {
+    console.error('Error erasing resident documents from Supabase:', err);
+  }
+}

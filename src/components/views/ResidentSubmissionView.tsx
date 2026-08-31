@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { ShieldCheck, Upload, CheckCircle2, Building2, User, FileText, ArrowRight, Lock } from 'lucide-react';
+import { ShieldCheck, Upload, CheckCircle2, Building2, User, FileText, ArrowRight, Lock, Trash2, AlertTriangle } from 'lucide-react';
 import { usePG } from '../../context/PGContext';
-import { uploadResidentPhoto, uploadAadhaarDocument, recordSubmissionInSupabase } from '../../lib/supabaseStorage';
+import { uploadResidentPhoto, uploadAadhaarDocument, recordSubmissionInSupabase, eraseResidentDocumentsFromSupabase } from '../../lib/supabaseStorage';
 
 interface ResidentSubmissionViewProps {
   roomNumber: string;
@@ -63,6 +63,27 @@ export const ResidentSubmissionView: React.FC<ResidentSubmissionViewProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState<boolean>(Boolean(savedSubmissionData));
   const [submissionError, setSubmissionError] = useState<string | null>(null);
+
+  const [showEraseTestConfirm, setShowEraseTestConfirm] = useState(false);
+  const [isErasingTest, setIsErasingTest] = useState(false);
+
+  const handleEraseTest = async () => {
+    setIsErasingTest(true);
+    try {
+      await eraseResidentDocumentsFromSupabase({
+        roomNumber,
+        residentId: selectedResidentId,
+        residentName
+      });
+      localStorage.removeItem(submittedStorageKey);
+      setIsSubmitted(false);
+      setShowEraseTestConfirm(false);
+    } catch (err) {
+      alert('Error resetting submission: ' + err);
+    } finally {
+      setIsErasingTest(false);
+    }
+  };
 
   // Set initial bed if occupants exist
   useEffect(() => {
@@ -212,6 +233,48 @@ export const ResidentSubmissionView: React.FC<ResidentSubmissionViewProps> = ({
           <p className="text-xs text-[#747878]">
             You can close this browser tab now. Thank you!
           </p>
+
+          {/* Tester 2-Step Erase & Reset Button */}
+          <div className="pt-3 border-t border-[#F5F2ED]">
+            {!showEraseTestConfirm ? (
+              <button
+                type="button"
+                onClick={() => setShowEraseTestConfirm(true)}
+                className="text-[11px] text-[#747878] hover:text-red-600 underline font-mono flex items-center justify-center gap-1 mx-auto"
+              >
+                <Trash2 className="w-3.5 h-3.5 text-red-500" />
+                <span>Erase & Test Re-upload (2-Step)</span>
+              </button>
+            ) : (
+              <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-left space-y-2 text-xs font-mono animate-fade-in">
+                <div className="flex items-center gap-1.5 font-bold text-red-900">
+                  <AlertTriangle className="w-4 h-4 text-red-600" />
+                  <span>Confirm Erase & Reset Test</span>
+                </div>
+                <p className="text-[10px] text-red-700">
+                  This will delete uploaded files from Supabase Storage and reset form so you can test re-uploading again.
+                </p>
+                <div className="flex justify-end gap-2 pt-1">
+                  <button
+                    type="button"
+                    onClick={() => setShowEraseTestConfirm(false)}
+                    disabled={isErasingTest}
+                    className="px-2.5 py-1 bg-white border border-gray-300 rounded text-gray-700 text-[11px]"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleEraseTest}
+                    disabled={isErasingTest}
+                    className="px-2.5 py-1 bg-red-600 text-white rounded font-bold text-[11px]"
+                  >
+                    {isErasingTest ? 'Erasing...' : '🔥 Yes, Erase & Reset'}
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     );

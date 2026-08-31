@@ -14,12 +14,14 @@ import {
   Clock,
   CheckCircle2,
   AlertCircle,
-  Download
+  Download,
+  Trash2,
+  AlertTriangle
 } from 'lucide-react';
 import { usePG } from '../../context/PGContext';
 import { Resident } from '../../types/pg';
 import { formatDayAndYear } from '../../utils/dateUtils';
-import { recordSubmissionInSupabase } from '../../lib/supabaseStorage';
+import { recordSubmissionInSupabase, eraseResidentDocumentsFromSupabase } from '../../lib/supabaseStorage';
 import { downloadAadhaarFile } from '../../utils/downloadUtils';
 
 interface ResidentProfileModalProps {
@@ -62,6 +64,33 @@ export const ResidentProfileModal: React.FC<ResidentProfileModalProps> = ({
       photoUrl: resident.photoUrl
     });
     setIsEditingAadhaar(false);
+  };
+
+  const [showEraseConfirm, setShowEraseConfirm] = useState(false);
+  const [isErasing, setIsErasing] = useState(false);
+
+  const handleEraseDocuments = async () => {
+    setIsErasing(true);
+    try {
+      await eraseResidentDocumentsFromSupabase({
+        roomNumber: resident.roomNumber,
+        residentId: resident.id,
+        residentName: resident.fullName,
+        photoUrl: resident.photoUrl,
+        aadhaarDocumentUrl: resident.aadhaarDocumentUrl
+      });
+      updateResident(resident.id, {
+        aadhaarNumber: '',
+        aadhaarDocumentUrl: undefined,
+        photoUrl: undefined
+      });
+      setShowEraseConfirm(false);
+      alert('Aadhaar Document and Photo successfully erased from Supabase Storage and Resident Profile!');
+    } catch (err) {
+      alert('Error erasing documents: ' + err);
+    } finally {
+      setIsErasing(false);
+    }
   };
 
   // Mask Aadhaar e.g. "9876 5432 1012" -> "XXXX-XXXX-1012"
@@ -429,6 +458,50 @@ export const ResidentProfileModal: React.FC<ResidentProfileModalProps> = ({
                     No physical Aadhaar document uploaded yet. Use Room QR Collector to invite resident for self-submission.
                   </div>
                 )}
+
+                {/* 2-Step Erase Documents Action */}
+                <div className="pt-3 border-t border-[#F5F2ED] flex justify-end">
+                  {!showEraseConfirm ? (
+                    <button
+                      type="button"
+                      onClick={() => setShowEraseConfirm(true)}
+                      className="py-2 px-3.5 rounded-xl bg-red-50 text-red-700 border border-red-200 text-xs font-semibold hover:bg-red-100 transition-colors flex items-center gap-1.5"
+                    >
+                      <Trash2 className="w-4 h-4 text-red-600" />
+                      <span>Erase Documents (2-Step)</span>
+                    </button>
+                  ) : (
+                    <div className="p-4 rounded-xl bg-red-50 border border-red-200 w-full space-y-3 animate-fade-in text-left">
+                      <div className="flex items-start gap-2.5">
+                        <AlertTriangle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+                        <div>
+                          <h5 className="font-bold text-xs text-red-900">Step 2: Confirm Document Erasure</h5>
+                          <p className="text-[11px] text-red-700 mt-0.5">
+                            Are you sure you want to permanently delete Room {resident.roomNumber} ({resident.fullName}) Aadhaar card and photo files from Supabase Storage? This action cannot be undone.
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-end gap-2 pt-1">
+                        <button
+                          type="button"
+                          onClick={() => setShowEraseConfirm(false)}
+                          disabled={isErasing}
+                          className="px-3 py-1.5 rounded-lg bg-white border border-gray-300 text-gray-700 text-xs font-semibold hover:bg-gray-50"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleEraseDocuments}
+                          disabled={isErasing}
+                          className="px-3.5 py-1.5 rounded-lg bg-red-600 text-white text-xs font-bold hover:bg-red-700 flex items-center gap-1 shadow-xs"
+                        >
+                          {isErasing ? 'Erasing...' : '🔥 Yes, Permanently Erase'}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           )}
