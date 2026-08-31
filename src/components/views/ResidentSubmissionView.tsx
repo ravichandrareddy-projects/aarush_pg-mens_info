@@ -50,8 +50,18 @@ export const ResidentSubmissionView: React.FC<ResidentSubmissionViewProps> = ({
   const [aadhaarFile, setAadhaarFile] = useState<File | null>(null);
   const [aadhaarFileName, setAadhaarFileName] = useState<string>('');
 
+  const submittedStorageKey = `aarush_submitted_room_${roomNumber}`;
+  const savedSubmissionData = (() => {
+    try {
+      const raw = localStorage.getItem(submittedStorageKey);
+      return raw ? JSON.parse(raw) : null;
+    } catch {
+      return null;
+    }
+  })();
+
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isSubmitted, setIsSubmitted] = useState<boolean>(Boolean(savedSubmissionData));
   const [submissionError, setSubmissionError] = useState<string | null>(null);
 
   // Set initial bed if occupants exist
@@ -143,6 +153,20 @@ export const ResidentSubmissionView: React.FC<ResidentSubmissionViewProps> = ({
         }
       }
 
+      // Save persistent submission status locally for refresh retention
+      try {
+        localStorage.setItem(
+          submittedStorageKey,
+          JSON.stringify({
+            residentName,
+            roomNumber,
+            submittedAt: new Date().toISOString()
+          })
+        );
+      } catch {
+        // Ignore localStorage error
+      }
+
       // 100% Verified Success
       setIsSubmitted(true);
     } catch (err: any) {
@@ -155,6 +179,8 @@ export const ResidentSubmissionView: React.FC<ResidentSubmissionViewProps> = ({
   };
 
   if (isSubmitted) {
+    const displayName = residentName || savedSubmissionData?.residentName || 'Resident';
+
     return (
       <div className="min-h-screen bg-[#FDFBF7] flex flex-col items-center justify-center p-6 text-center">
         <div className="max-w-md w-full bg-white p-8 rounded-2xl border border-[#F5F2ED] shadow-floating space-y-6 animate-fade-in">
@@ -172,7 +198,7 @@ export const ResidentSubmissionView: React.FC<ResidentSubmissionViewProps> = ({
           <div className="p-4 rounded-xl bg-[#FDFBF7] border border-[#F5F2ED] text-left text-xs space-y-2 font-mono">
             <div className="flex justify-between">
               <span className="text-[#747878]">Resident Name:</span>
-              <span className="font-bold text-[#181919]">{residentName}</span>
+              <span className="font-bold text-[#181919]">{displayName}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-[#747878]">Room Number:</span>
