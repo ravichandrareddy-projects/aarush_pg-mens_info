@@ -48,8 +48,25 @@ export const QRScannerCollectorView: React.FC<QRScannerCollectorViewProps> = ({
         r.id.toLowerCase() === searchQuery.trim().toLowerCase()
     ) || allRooms[0];
 
+  const getPublicBaseUrl = () => {
+    const customPublic = import.meta.env.VITE_PUBLIC_WEB_URL;
+    if (customPublic) return customPublic.replace(/\/$/, '');
+    const origin = window.location.origin;
+    if (
+      !origin ||
+      origin.includes('localhost') ||
+      origin.includes('127.0.0.1') ||
+      origin.startsWith('file:') ||
+      origin.startsWith('capacitor:')
+    ) {
+      return 'https://aarush-pg-mens-info.vercel.app';
+    }
+    return origin;
+  };
+
+  const baseOrigin = getPublicBaseUrl();
   const roomNumber = currentRoom ? currentRoom.roomNumber : '101';
-  const submissionUrl = `${window.location.origin}${window.location.pathname}?collectRoom=${encodeURIComponent(roomNumber)}`;
+  const submissionUrl = `${baseOrigin}${window.location.pathname}?collectRoom=${encodeURIComponent(roomNumber)}`;
 
   const whatsappMessage = encodeURIComponent(
     `🏢 *Aarush Mens Luxury PG - Document Submission*\n\n` +

@@ -14,16 +14,26 @@ export const ResidentSubmissionView: React.FC<ResidentSubmissionViewProps> = ({
 }) => {
   const { floors, residents, getResidentById } = usePG();
 
-  // Find target room across all floors
+  // Flexible Room Lookup
   let targetRoom: any = null;
   let targetFloorName = '';
 
-  for (const floor of floors) {
-    const r = floor.rooms.find((rm) => rm.roomNumber === roomNumber);
-    if (r) {
-      targetRoom = r;
-      targetFloorName = floor.name;
-      break;
+  const cleanQuery = (roomNumber || '').trim().toLowerCase();
+
+  if (floors && Array.isArray(floors)) {
+    for (const floor of floors) {
+      if (!floor.rooms) continue;
+      const r = floor.rooms.find(
+        (rm) =>
+          rm.roomNumber.toLowerCase() === cleanQuery ||
+          rm.id.toLowerCase() === cleanQuery ||
+          rm.roomNumber.replace(/[^0-9]/g, '') === cleanQuery.replace(/[^0-9]/g, '')
+      );
+      if (r) {
+        targetRoom = r;
+        targetFloorName = floor.name;
+        break;
+      }
     }
   }
 
