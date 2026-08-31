@@ -10,11 +10,13 @@ import {
   CheckCircle2,
   Utensils,
   Briefcase,
-  Phone
+  Phone,
+  QrCode
 } from 'lucide-react';
 import { usePG } from '../../context/PGContext';
 import { Floor, Room, Bed } from '../../types/pg';
 import { formatDayAndYear } from '../../utils/dateUtils';
+import { RoomQRCollectorModal } from '../modals/RoomQRCollectorModal';
 
 interface FloorsRoomsViewProps {
   onOpenAddResidentForBed: (floorId: string, roomId: string, bedId: string) => void;
@@ -44,6 +46,7 @@ export const FloorsRoomsView: React.FC<FloorsRoomsViewProps> = ({
   const setSelectedRoomId = propSetRoomId || setLocalRoomId;
 
   const [sharingFilter, setSharingFilter] = useState<'ALL' | 3 | 4 | 5>('ALL');
+  const [isQRModalOpen, setIsQRModalOpen] = useState(false);
 
   const selectedFloor = floors.find((f) => f.id === selectedFloorId);
   const selectedRoom = selectedFloor?.rooms.find((r) => r.id === selectedRoomId);
@@ -93,8 +96,17 @@ export const FloorsRoomsView: React.FC<FloorsRoomsViewProps> = ({
               </p>
             </div>
 
-            {/* Room Occupancy Badge */}
+            {/* Room Occupancy Badge & QR Collector Button */}
             <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setIsQRModalOpen(true)}
+                className="px-3.5 py-2 rounded-xl bg-[#181919] text-white hover:bg-black font-semibold text-xs transition-all flex items-center gap-1.5 shadow-xs"
+              >
+                <QrCode className="w-4 h-4 text-[#A8C393]" />
+                <span>Collect Aadhaar (QR)</span>
+              </button>
+
               <div className="text-right">
                 <p className="text-xs text-[#747878] font-mono uppercase">Occupancy</p>
                 <p className="text-lg font-semibold font-mono text-[#181919]">
@@ -255,6 +267,14 @@ export const FloorsRoomsView: React.FC<FloorsRoomsViewProps> = ({
             })}
           </div>
         </div>
+
+        <RoomQRCollectorModal
+          isOpen={isQRModalOpen}
+          onClose={() => setIsQRModalOpen(false)}
+          floorName={selectedFloor.name}
+          roomNumber={selectedRoom.roomNumber}
+          beds={selectedRoom.beds}
+        />
       </div>
     );
   }

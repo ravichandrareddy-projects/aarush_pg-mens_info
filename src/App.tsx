@@ -22,6 +22,7 @@ import { RecordPaymentModal } from './components/modals/RecordPaymentModal';
 import { GlobalSearchModal } from './components/modals/GlobalSearchModal';
 
 import { InitialSplashScreen, ScreenTransitionLoader } from './components/layout/LoadingScreens';
+import { ResidentSubmissionView } from './components/views/ResidentSubmissionView';
 
 const tabTitles: Record<NavTab, string> = {
   dashboard: 'Dashboard',
@@ -35,6 +36,10 @@ const tabTitles: Record<NavTab, string> = {
 
 const MainAppContent: React.FC = () => {
   const { theme } = usePG();
+
+  // URL Query param check for resident QR self-submission
+  const searchParams = new URLSearchParams(window.location.search);
+  const collectRoomParam = searchParams.get('collectRoom') || searchParams.get('room');
 
   // App Loading States
   const [isInitialLoading, setIsInitialLoading] = useState(true);
@@ -211,6 +216,17 @@ const MainAppContent: React.FC = () => {
     setRecordPaymentResidentId(resId);
     setIsRecordPaymentOpen(true);
   };
+
+  if (collectRoomParam) {
+    return (
+      <ResidentSubmissionView
+        roomNumber={collectRoomParam}
+        onFinished={() => {
+          window.location.href = window.location.pathname;
+        }}
+      />
+    );
+  }
 
   if (isInitialLoading) {
     return <InitialSplashScreen onFinish={() => setIsInitialLoading(false)} />;
