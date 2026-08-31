@@ -1,6 +1,6 @@
 import { supabase, isSupabaseConfigured } from './supabase';
 
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://xwgdtchvodsfzblcagfy.supabase.co';
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://xwgdchtvodsfzblcagfy.supabase.co';
 const SUPABASE_KEY =
   import.meta.env.VITE_SUPABASE_SERVICE_ROLE_KEY ||
   import.meta.env.VITE_SUPABASE_ANON_KEY ||
