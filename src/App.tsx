@@ -25,7 +25,7 @@ import { InitialSplashScreen, ScreenTransitionLoader } from './components/layout
 import { ResidentSubmissionView } from './components/views/ResidentSubmissionView';
 import { QRScannerCollectorView } from './components/views/QRScannerCollectorView';
 import { AdminAuthModal } from './components/modals/AdminAuthModal';
-import { isAdminSessionActive, setAdminSession } from './utils/securityUtils';
+import { isAdminSessionActive, setAdminSession, resolveRoomNumberFromToken } from './utils/securityUtils';
 import { useSecurityDeterrents } from './hooks/useSecurityDeterrents';
 import { getGlobalResetTimestamp } from './lib/supabaseStorage';
 
@@ -45,7 +45,8 @@ const MainAppContent: React.FC = () => {
 
   // URL Query param check for resident QR self-submission
   const searchParams = new URLSearchParams(window.location.search);
-  const collectRoomParam = searchParams.get('collectRoom') || searchParams.get('room');
+  const rawRoomParam = searchParams.get('collectRoomToken') || searchParams.get('collectRoom') || searchParams.get('token') || searchParams.get('room');
+  const collectRoomParam = resolveRoomNumberFromToken(rawRoomParam || '');
 
   // Admin Auth Session State
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState<boolean>(() => isAdminSessionActive());

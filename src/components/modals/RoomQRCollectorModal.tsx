@@ -3,6 +3,7 @@ import { X, QrCode, Share2, Copy, Check, ShieldCheck, Clock, ExternalLink, FileT
 import { QRCodeSVG } from '../common/QRCodeSVG';
 import { Bed } from '../../types/pg';
 import { usePG } from '../../context/PGContext';
+import { getRoomSecurityToken } from '../../utils/securityUtils';
 
 interface RoomQRCollectorModalProps {
   isOpen: boolean;
@@ -42,7 +43,8 @@ export const RoomQRCollectorModal: React.FC<RoomQRCollectorModalProps> = ({
   };
 
   const baseOrigin = getPublicBaseUrl().replace(/\/$/, '');
-  const submissionUrl = `${baseOrigin}/?collectRoom=${encodeURIComponent(roomNumber)}`;
+  const roomSecurityToken = getRoomSecurityToken(roomNumber);
+  const submissionUrl = `${baseOrigin}/?collectRoomToken=${encodeURIComponent(roomSecurityToken)}`;
 
   // WhatsApp share link formatted message
   const whatsappMessage = encodeURIComponent(

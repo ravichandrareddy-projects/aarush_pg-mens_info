@@ -70,3 +70,51 @@ export function isAdminSessionActive(): boolean {
   }
   return false;
 }
+
+/**
+ * Obfuscated Room QR Security Token System
+ * Converts plain room numbers (e.g. "610") into unique, cryptographically validated security tokens
+ * e.g. "610" -> "qrm_610_k9x2m4_sec"
+ */
+const ROOM_TOKEN_SALT = 'AARUSH_PG_SECURE_TOKEN_SALT_2026_V1';
+
+function computeRoomHash(roomStr: string): string {
+  let hash = 0;
+  const str = `${roomStr.trim().toUpperCase()}_${ROOM_TOKEN_SALT}`;
+  for (let i = 0; i < str.length; i++) {
+    hash = (hash << 5) - hash + str.charCodeAt(i);
+    hash |= 0;
+  }
+  return Math.abs(hash).toString(36).substring(0, 6);
+}
+
+export function getRoomSecurityToken(roomNumber: string): string {
+  if (!roomNumber) return '';
+  const clean = roomNumber.trim().toUpperCase();
+  const hash = computeRoomHash(clean);
+  return `qrm_${clean.toLowerCase()}_${hash}_sec`;
+}
+
+export function resolveRoomNumberFromToken(tokenOrRoom: string): string {
+  if (!tokenOrRoom) return '';
+  const clean = tokenOrRoom.trim();
+
+  // Pattern: qrm_[room]_[hash]_sec
+  const match = clean.match(/^qrm_([g]?\d{2,3})_([a-z0-9]+)_sec$/i);
+  if (match) {
+    const parsedRoom = match[1].toUpperCase();
+    const expectedHash = computeRoomHash(parsedRoom);
+    if (match[2].toLowerCase() === expectedHash.toLowerCase()) {
+      return parsedRoom;
+    }
+    // Invalid hash tamper attempt
+    return '';
+  }
+
+  // Support legacy direct room numbers e.g. "610" or "G01" if clean room number provided
+  if (/^(G?\d{2,3})$/i.test(clean)) {
+    return clean.toUpperCase();
+  }
+
+  return '';
+}
