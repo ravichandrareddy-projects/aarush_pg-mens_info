@@ -413,10 +413,30 @@ const MainAppContent: React.FC = () => {
   );
 };
 
+function AppWrapper() {
+  const { showDeniedToast } = useSecurityDeterrents(true);
+
+  return (
+    <>
+      {/* Access Denied Warning Toast (Unconditional Root Level) */}
+      {showDeniedToast && (
+        <div className="fixed top-5 left-1/2 -translate-x-1/2 z-[9999] bg-[#181919] text-white px-5 py-3 rounded-2xl shadow-2xl border-2 border-red-500 flex items-center gap-3 animate-bounce select-none pointer-events-none">
+          <span className="text-2xl">🖕</span>
+          <div>
+            <div className="font-bold text-xs text-red-400 font-mono tracking-wider uppercase">ACCESS DENIED!</div>
+            <div className="text-[10px] font-mono text-gray-200">Developer Tools & Code Inspect are permanently blocked for Resident Privacy.</div>
+          </div>
+        </div>
+      )}
+      <MainAppContent />
+    </>
+  );
+}
+
 export default function App() {
   return (
     <PGProvider>
-      <MainAppContent />
+      <AppWrapper />
     </PGProvider>
   );
 }
