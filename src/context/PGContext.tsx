@@ -120,32 +120,77 @@ export const PGProvider: React.FC<{ children: React.ReactNode }> = ({ children }
     const syncSubmissions = async () => {
       try {
         const remoteSubs = await getRemoteSubmissionsFromSupabase();
-        if (remoteSubs && remoteSubs.length > 0) {
+        if (remoteSubs && Array.isArray(remoteSubs) && remoteSubs.length > 0) {
           setResidents((prevResidents) => {
             let updated = false;
-            const nextResidents = prevResidents.map((res) => {
-              const sub = remoteSubs.find(
-                (s) =>
-                  (s.residentId && s.residentId === res.id) ||
-                  (s.roomNumber === res.roomNumber && s.residentName.trim().toLowerCase() === res.fullName.trim().toLowerCase())
+            let nextResidents = [...prevResidents];
+
+            for (const sub of remoteSubs) {
+              if (!sub.roomNumber || !sub.residentName) continue;
+
+              // Find existing resident match
+              const existingIdx = nextResidents.findIndex(
+                (res) =>
+                  (sub.residentId && res.id === sub.residentId) ||
+                  (sub.bedId && res.bedId === sub.bedId && res.roomNumber === sub.roomNumber) ||
+                  (sub.roomNumber === res.roomNumber && sub.residentName.trim().toLowerCase() === res.fullName.trim().toLowerCase())
               );
-              if (sub) {
+
+              if (existingIdx !== -1) {
+                const res = nextResidents[existingIdx];
                 if (
                   res.aadhaarDocumentUrl !== sub.aadhaarDocumentUrl ||
                   res.photoUrl !== sub.photoUrl ||
                   (sub.aadhaarNumber && res.aadhaarNumber !== sub.aadhaarNumber)
                 ) {
                   updated = true;
-                  return {
+                  nextResidents[existingIdx] = {
                     ...res,
+                    fullName: sub.residentName || res.fullName,
+                    phone: sub.phone || res.phone,
                     aadhaarNumber: sub.aadhaarNumber || res.aadhaarNumber,
                     aadhaarDocumentUrl: sub.aadhaarDocumentUrl || res.aadhaarDocumentUrl,
                     photoUrl: sub.photoUrl || res.photoUrl
                   };
                 }
+              } else {
+                // Auto-create new resident object for new room occupant submission
+                updated = true;
+                const newResId = sub.residentId || `res_${sub.roomNumber}_${Date.now()}_${Math.random().toString(36).substring(2, 5)}`;
+                const bedId = sub.bedId || `${sub.roomNumber}-B1`;
+                const bedNumMatch = bedId.match(/B(\d+)/i);
+                const bedNumber = bedNumMatch ? parseInt(bedNumMatch[1], 10) : 1;
+
+                const newResObj = {
+                  id: newResId,
+                  fullName: sub.residentName,
+                  phone: sub.phone || '9999999999',
+                  aadhaarNumber: sub.aadhaarNumber || '',
+                  address: `Aarush Mens PG, Room ${sub.roomNumber}`,
+                  floorId: `floor_${sub.roomNumber.charAt(0)}`,
+                  roomId: sub.roomNumber,
+                  roomNumber: sub.roomNumber,
+                  bedId: bedId,
+                  bedNumber: bedNumber,
+                  monthlyRent: 8000,
+                  rentDueDay: 1,
+                  amountPaid: 0,
+                  amountPending: 8000,
+                  paymentStatus: 'UNPAID' as const,
+                  joiningDate: new Date().toISOString().split('T')[0],
+                  status: 'ACTIVE' as const,
+                  emergencyName: 'Guardian',
+                  emergencyPhone: sub.phone || '9999999999',
+                  emergencyRelationship: 'Parent',
+                  createdAt: sub.submittedAt || new Date().toISOString(),
+                  aadhaarDocumentUrl: sub.aadhaarDocumentUrl,
+                  photoUrl: sub.photoUrl
+                };
+
+                nextResidents.push(newResObj);
               }
-              return res;
-            });
+            }
+
             return updated ? nextResidents : prevResidents;
           });
         }
@@ -155,7 +200,7 @@ export const PGProvider: React.FC<{ children: React.ReactNode }> = ({ children }
     };
 
     syncSubmissions();
-    const interval = setInterval(syncSubmissions, 10000);
+    const interval = setInterval(syncSubmissions, 5000);
     return () => clearInterval(interval);
   }, []);
 

@@ -156,11 +156,43 @@ export interface RemoteSubmissionRecord {
   submittedAt: string;
 }
 
+export function extractSupabaseFilePath(url: string, bucketName: string): string | null {
+  if (!url) return null;
+  const marker = `/public/${bucketName}/`;
+  const idx = url.indexOf(marker);
+  if (idx !== -1) {
+    return url.substring(idx + marker.length);
+  }
+  return null;
+}
+
 /**
  * Fetch all resident document submissions saved in Supabase Storage manifest
  */
 export async function getRemoteSubmissionsFromSupabase(): Promise<RemoteSubmissionRecord[]> {
   if (!SUPABASE_URL || !SUPABASE_KEY) return [];
+
+  const cacheBuster = `t=${Date.now()}`;
+
+  // 1. Direct REST API download with cache buster
+  try {
+    const endpoint = `${SUPABASE_URL}/storage/v1/object/public/aadhaar-documents/manifest/submissions.json?${cacheBuster}`;
+    const res = await fetch(endpoint, {
+      headers: {
+        Authorization: `Bearer ${SUPABASE_KEY}`,
+        apikey: SUPABASE_KEY,
+        'Cache-Control': 'no-cache, no-store, must-revalidate'
+      }
+    });
+    if (res.ok) {
+      const json = await res.json();
+      return Array.isArray(json) ? json : [];
+    }
+  } catch (err) {
+    console.warn('Notice fetching remote submissions via REST:', err);
+  }
+
+  // 2. Fallback to JS client
   try {
     if (supabase) {
       const { data, error } = await supabase.storage.from('aadhaar-documents').download('manifest/submissions.json');
@@ -173,37 +205,53 @@ export async function getRemoteSubmissionsFromSupabase(): Promise<RemoteSubmissi
     console.warn('Notice fetching remote submissions via client:', err);
   }
 
-  try {
-    const endpoint = `${SUPABASE_URL}/storage/v1/object/public/aadhaar-documents/manifest/submissions.json`;
-    const res = await fetch(endpoint, {
-      headers: {
-        Authorization: `Bearer ${SUPABASE_KEY}`,
-        apikey: SUPABASE_KEY
-      }
-    });
-    if (res.ok) {
-      return await res.json();
-    }
-  } catch (err) {
-    console.warn('Notice fetching remote submissions via REST:', err);
-  }
-
   return [];
 }
 
 /**
- * Save new resident document submission to Supabase Storage manifest
+ * Save new resident document submission to Supabase Storage manifest.
+ * Automatically deletes previous photo and Aadhaar document files from Supabase Storage on re-upload!
  */
 export async function recordSubmissionInSupabase(record: Omit<RemoteSubmissionRecord, 'id' | 'submittedAt'>) {
   if (!SUPABASE_URL || !SUPABASE_KEY) return;
   try {
     const existing = await getRemoteSubmissionsFromSupabase();
+
+    // Match condition for previous submission by residentId, bedId+roomNumber, or name+roomNumber
+    const matchCondition = (r: RemoteSubmissionRecord) => {
+      if (record.residentId && r.residentId && r.residentId === record.residentId) return true;
+      if (record.bedId && r.bedId && r.bedId === record.bedId && r.roomNumber === record.roomNumber) return true;
+      if (r.roomNumber === record.roomNumber && r.residentName.trim().toLowerCase() === record.residentName.trim().toLowerCase()) return true;
+      return false;
+    };
+
+    const previousRecords = existing.filter(matchCondition);
+
+    // Delete old files from Supabase Storage so old duplicates are removed on re-upload!
+    for (const prev of previousRecords) {
+      if (prev.photoUrl && record.photoUrl && prev.photoUrl !== record.photoUrl) {
+        const path = extractSupabaseFilePath(prev.photoUrl, 'resident-photos');
+        if (path) {
+          console.log(`[Supabase Cleanup] Removing old photo: ${path}`);
+          await deleteSupabaseFile('resident-photos', path);
+        }
+      }
+      if (prev.aadhaarDocumentUrl && record.aadhaarDocumentUrl && prev.aadhaarDocumentUrl !== record.aadhaarDocumentUrl) {
+        const path = extractSupabaseFilePath(prev.aadhaarDocumentUrl, 'aadhaar-documents');
+        if (path) {
+          console.log(`[Supabase Cleanup] Removing old Aadhaar document: ${path}`);
+          await deleteSupabaseFile('aadhaar-documents', path);
+        }
+      }
+    }
+
     const newRecord: RemoteSubmissionRecord = {
       ...record,
       id: `sub_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
       submittedAt: new Date().toISOString()
     };
-    const updated = [newRecord, ...existing.filter((r) => !(r.residentId && r.residentId === record.residentId))];
+
+    const updated = [newRecord, ...existing.filter((r) => !matchCondition(r))];
     const blob = new Blob([JSON.stringify(updated, null, 2)], { type: 'application/json' });
 
     await uploadToSupabaseBucket('aadhaar-documents', 'manifest/submissions.json', blob);
