@@ -187,15 +187,6 @@ export const ResidentSubmissionView: React.FC<ResidentSubmissionViewProps> = ({
           <p className="text-xs text-[#747878]">
             You can close this browser tab now. Thank you!
           </p>
-
-          {onFinished && (
-            <button
-              onClick={onFinished}
-              className="w-full py-3 rounded-xl bg-[#181919] text-white font-semibold text-xs hover:bg-black transition-colors"
-            >
-              Return to PG App
-            </button>
-          )}
         </div>
       </div>
     );
