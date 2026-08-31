@@ -337,7 +337,31 @@ export async function eraseResidentDocumentsFromSupabase(params: {
     const blob = new Blob([JSON.stringify(updated, null, 2)], { type: 'application/json' });
     await uploadToSupabaseBucket('aadhaar-documents', 'manifest/submissions.json', blob);
 
-    // 3. Clear local submission state for that room
+    // 3. Update master_state.json to strip document URLs
+    try {
+      const master = await getMasterStateFromSupabase();
+      if (master && master.residents && Array.isArray(master.residents)) {
+        const updatedMasterResidents = master.residents.map((r: any) => {
+          if (
+            (params.residentId && r.id === params.residentId) ||
+            (params.residentName && r.roomNumber === params.roomNumber && r.fullName.trim().toLowerCase() === params.residentName.trim().toLowerCase())
+          ) {
+            const copy = { ...r };
+            delete copy.photoUrl;
+            delete copy.aadhaarDocumentUrl;
+            copy.aadhaarNumber = '';
+            return copy;
+          }
+          return r;
+        });
+
+        await saveMasterStateToSupabase({ residents: updatedMasterResidents });
+      }
+    } catch (mErr) {
+      console.warn('Notice updating master_state in eraseResidentDocuments:', mErr);
+    }
+
+    // 4. Clear local submission state for that room
     try {
       localStorage.removeItem(`aarush_submitted_room_${params.roomNumber}`);
     } catch {
