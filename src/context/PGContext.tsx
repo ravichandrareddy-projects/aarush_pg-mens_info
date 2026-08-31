@@ -217,8 +217,34 @@ export const PGProvider: React.FC<{ children: React.ReactNode }> = ({ children }
     const syncMasterState = async () => {
       try {
         const remoteMaster = await getMasterStateFromSupabase();
-        if (remoteMaster && remoteMaster.residents && Array.isArray(remoteMaster.residents) && remoteMaster.residents.length > 0) {
+        if (remoteMaster && remoteMaster.residents && Array.isArray(remoteMaster.residents)) {
           setResidents((prev) => {
+            // Merge remote residents with any local residents not in remote
+            const remoteMap = new Map<string, Resident>();
+            remoteMaster.residents.forEach((r: Resident) => remoteMap.set(r.id, r));
+
+            let hasNewMerged = false;
+            const merged = [...remoteMaster.residents];
+
+            prev.forEach((localRes) => {
+              if (!remoteMap.has(localRes.id)) {
+                // Keep locally added resident that hasn't synced to remote yet
+                const isDuplicateNameRoom = remoteMaster.residents.some(
+                  (rr: Resident) => rr.fullName.trim().toLowerCase() === localRes.fullName.trim().toLowerCase() && rr.roomNumber === localRes.roomNumber
+                );
+                if (!isDuplicateNameRoom) {
+                  merged.unshift(localRes);
+                  hasNewMerged = true;
+                }
+              }
+            });
+
+            if (hasNewMerged) {
+              // Immediately push merged list back to Supabase
+              saveMasterStateToSupabase({ residents: merged });
+              return merged;
+            }
+
             if (JSON.stringify(prev) !== JSON.stringify(remoteMaster.residents)) {
               return remoteMaster.residents;
             }
@@ -348,7 +374,11 @@ export const PGProvider: React.FC<{ children: React.ReactNode }> = ({ children }
       createdAt: now
     };
 
-    setResidents((prev) => [newResident, ...prev]);
+    setResidents((prev) => {
+      const updated = [newResident, ...prev];
+      saveMasterStateToSupabase({ residents: updated });
+      return updated;
+    });
 
     // Record initial payment entry if amountPaid > 0
     if (residentData.amountPaid > 0) {
