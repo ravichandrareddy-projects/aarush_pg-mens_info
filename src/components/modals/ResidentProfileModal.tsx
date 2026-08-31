@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   X,
   User,
@@ -42,13 +42,23 @@ export const ResidentProfileModal: React.FC<ResidentProfileModalProps> = ({
   const { getResidentById, updateResident, payments, activities } = usePG();
   const [activeTab, setActiveTab] = useState<'INFO' | 'PAYMENTS' | 'DOCS' | 'HISTORY'>('INFO');
   const [showFullAadhaar, setShowFullAadhaar] = useState(false);
-
-  if (!residentId) return null;
-  const resident = getResidentById(residentId);
-  if (!resident) return null;
-
   const [isEditingName, setIsEditingName] = useState(false);
-  const [editedName, setEditedName] = useState(resident.fullName || '');
+  const [editedName, setEditedName] = useState('');
+  const [isEditingAadhaar, setIsEditingAadhaar] = useState(false);
+  const [editedAadhaar, setEditedAadhaar] = useState('');
+  const [showEraseConfirm, setShowEraseConfirm] = useState(false);
+  const [isErasing, setIsErasing] = useState(false);
+
+  const resident = residentId ? getResidentById(residentId) : undefined;
+
+  useEffect(() => {
+    if (resident) {
+      setEditedName(resident.fullName || '');
+      setEditedAadhaar(resident.aadhaarNumber || '');
+    }
+  }, [residentId, resident?.fullName, resident?.aadhaarNumber]);
+
+  if (!residentId || !resident) return null;
 
   const handleSaveName = async () => {
     if (!editedName.trim()) return;
@@ -67,9 +77,6 @@ export const ResidentProfileModal: React.FC<ResidentProfileModalProps> = ({
     setIsEditingName(false);
   };
 
-  const [isEditingAadhaar, setIsEditingAadhaar] = useState(false);
-  const [editedAadhaar, setEditedAadhaar] = useState(resident.aadhaarNumber || '');
-
   const handleSaveAadhaar = async () => {
     if (!editedAadhaar) return;
     updateResident(resident.id, { aadhaarNumber: editedAadhaar });
@@ -85,9 +92,6 @@ export const ResidentProfileModal: React.FC<ResidentProfileModalProps> = ({
     });
     setIsEditingAadhaar(false);
   };
-
-  const [showEraseConfirm, setShowEraseConfirm] = useState(false);
-  const [isErasing, setIsErasing] = useState(false);
 
   const handleEraseDocuments = async () => {
     setIsErasing(true);
