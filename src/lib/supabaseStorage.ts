@@ -55,21 +55,67 @@ async function uploadToSupabaseBucket(bucketName: string, filePath: string, file
   return null;
 }
 
+export function getFloorFolderName(roomNumber: string): string {
+  const cleanRoom = roomNumber.trim().toUpperCase();
+  if (cleanRoom.startsWith('G')) return 'Ground_Floor';
+  const firstChar = cleanRoom.charAt(0);
+  switch (firstChar) {
+    case '1': return '1st_Floor';
+    case '2': return '2nd_Floor';
+    case '3': return '3rd_Floor';
+    case '4': return '4th_Floor';
+    case '5': return '5th_Floor';
+    case '6': return '6th_Floor';
+    case '7': return '7th_Floor';
+    default: return 'Floor_General';
+  }
+}
+
 /**
  * Upload resident photo to Supabase Storage ('resident-photos' bucket)
+ * Saves in Floor-wise / Room-wise folder hierarchy e.g. 1st_Floor/Room_101/photo.jpg
  */
-export async function uploadResidentPhoto(file: File | Blob, fileName: string): Promise<string | null> {
+export async function uploadResidentPhoto(
+  file: File | Blob,
+  fileName: string,
+  roomNumber?: string,
+  floorName?: string
+): Promise<string | null> {
   const sanitizeName = fileName.replace(/[^a-zA-Z0-9_.-]/g, '_');
-  const filePath = `photos/${Date.now()}_${sanitizeName}`;
+  const floorFolder = floorName
+    ? floorName.replace(/[^a-zA-Z0-9_.-]/g, '_')
+    : roomNumber
+    ? getFloorFolderName(roomNumber)
+    : 'General_Floor';
+  const roomFolder = roomNumber
+    ? `Room_${roomNumber.trim().replace(/[^a-zA-Z0-9_.-]/g, '_')}`
+    : 'General_Room';
+
+  const filePath = `${floorFolder}/${roomFolder}/${Date.now()}_${sanitizeName}`;
   return uploadToSupabaseBucket('resident-photos', filePath, file);
 }
 
 /**
  * Upload Aadhaar card document to Supabase Storage ('aadhaar-documents' bucket)
+ * Saves in Floor-wise / Room-wise folder hierarchy e.g. 1st_Floor/Room_101/aadhaar.pdf
  */
-export async function uploadAadhaarDocument(file: File | Blob, fileName: string): Promise<string | null> {
+export async function uploadAadhaarDocument(
+  file: File | Blob,
+  fileName: string,
+  roomNumber?: string,
+  floorName?: string
+): Promise<string | null> {
   const sanitizeName = fileName.replace(/[^a-zA-Z0-9_.-]/g, '_');
-  const filePath = `documents/${Date.now()}_${sanitizeName}`;
+  const floorFolder = floorName
+    ? floorName.replace(/[^a-zA-Z0-9_.-]/g, '_')
+    : roomNumber
+    ? getFloorFolderName(roomNumber)
+    : 'General_Floor';
+  const roomFolder = roomNumber
+    ? `Room_${roomNumber.trim().replace(/[^a-zA-Z0-9_.-]/g, '_')}`
+    : 'General_Room';
+
+  const filePath = `${floorFolder}/${roomFolder}/${Date.now()}_${sanitizeName}`;
   return uploadToSupabaseBucket('aadhaar-documents', filePath, file);
 }
 

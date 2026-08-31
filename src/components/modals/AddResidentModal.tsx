@@ -351,7 +351,7 @@ export const AddResidentModal: React.FC<AddResidentModalProps> = ({
                         const file = e.target.files[0];
                         setAadhaarDocName(file.name);
                         setIsUploadingAadhaar(true);
-                        const uploadedUrl = await uploadAadhaarDocument(file, file.name);
+                        const uploadedUrl = await uploadAadhaarDocument(file, file.name, selectedRoom?.roomNumber);
                         if (uploadedUrl) {
                           setAadhaarDocUrl(uploadedUrl);
                         }

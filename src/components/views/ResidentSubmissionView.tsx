@@ -94,12 +94,12 @@ export const ResidentSubmissionView: React.FC<ResidentSubmissionViewProps> = ({
 
     try {
       if (photoFile) {
-        const pUrl = await uploadResidentPhoto(photoFile, `Room_${roomNumber}_${residentName}_photo`);
+        const pUrl = await uploadResidentPhoto(photoFile, `${residentName}_photo`, roomNumber, targetFloorName);
         if (pUrl) finalPhotoUrl = pUrl;
       }
 
       if (aadhaarFile) {
-        const aUrl = await uploadAadhaarDocument(aadhaarFile, `Room_${roomNumber}_${residentName}_aadhaar`);
+        const aUrl = await uploadAadhaarDocument(aadhaarFile, `${residentName}_aadhaar`, roomNumber, targetFloorName);
         if (aUrl) finalAadhaarUrl = aUrl;
       }
 
