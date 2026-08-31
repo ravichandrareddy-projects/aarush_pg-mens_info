@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { ShieldAlert } from 'lucide-react';
 import { PGProvider, usePG } from './context/PGContext';
 import { Sidebar, NavTab } from './components/layout/Sidebar';
 import { MobileNav } from './components/layout/MobileNav';
@@ -261,6 +262,26 @@ const MainAppContent: React.FC = () => {
           window.location.href = window.location.pathname;
         }}
       />
+    );
+  }
+
+  if (rawRoomParam && !collectRoomParam) {
+    return (
+      <div className="min-h-screen bg-[#FDFBF7] flex items-center justify-center p-4">
+        <div className="bg-white p-8 rounded-2xl border border-red-200 shadow-floating max-w-md w-full text-center space-y-4 animate-fade-in">
+          <div className="w-14 h-14 rounded-full bg-red-100 text-red-600 flex items-center justify-center mx-auto shadow-subtle">
+            <ShieldAlert className="w-7 h-7" />
+          </div>
+          <h2 className="text-xl font-bold text-[#181919]">Expired / Invalid QR Security Link</h2>
+          <p className="text-xs text-[#747878] font-mono leading-relaxed">
+            The QR code or room link you opened has been permanently revoked for security protection.
+          </p>
+          <div className="p-4 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs font-mono text-left space-y-1">
+            <span className="font-bold block uppercase text-[10px] text-amber-800">🔒 Security Protection Active</span>
+            <p>Old direct room links (e.g. ?collectRoom=610) have been permanently disabled. Please scan the newly generated QR code provided by PG Management.</p>
+          </div>
+        </div>
+      </div>
     );
   }
 

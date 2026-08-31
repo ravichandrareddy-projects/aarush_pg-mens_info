@@ -72,11 +72,12 @@ export function isAdminSessionActive(): boolean {
 }
 
 /**
- * Obfuscated Room QR Security Token System
+ * Obfuscated Room QR Security Token System (V2 Strict)
  * Converts plain room numbers (e.g. "610") into unique, cryptographically validated security tokens
  * e.g. "610" -> "qrm_610_k9x2m4_sec"
+ * OLD DIRECT LINKS (?collectRoom=610) ARE 100% INVALIDATED AND REJECTED.
  */
-const ROOM_TOKEN_SALT = 'AARUSH_PG_SECURE_TOKEN_SALT_2026_V1';
+const ROOM_TOKEN_SALT = 'AARUSH_PG_SECURE_TOKEN_SALT_2026_V2_ENCRYPTED_NEW_LINKS';
 
 function computeRoomHash(roomStr: string): string {
   let hash = 0;
@@ -111,10 +112,6 @@ export function resolveRoomNumberFromToken(tokenOrRoom: string): string {
     return '';
   }
 
-  // Support legacy direct room numbers e.g. "610" or "G01" if clean room number provided
-  if (/^(G?\d{2,3})$/i.test(clean)) {
-    return clean.toUpperCase();
-  }
-
+  // ALL OLD DIRECT ROOM NUMBERS (e.g. ?collectRoom=610 or 101) ARE REJECTED
   return '';
 }
