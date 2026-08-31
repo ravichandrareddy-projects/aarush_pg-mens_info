@@ -27,6 +27,7 @@ import { QRScannerCollectorView } from './components/views/QRScannerCollectorVie
 import { AdminAuthModal } from './components/modals/AdminAuthModal';
 import { isAdminSessionActive, setAdminSession } from './utils/securityUtils';
 import { useSecurityDeterrents } from './hooks/useSecurityDeterrents';
+import { getGlobalResetTimestamp } from './lib/supabaseStorage';
 
 const tabTitles: Record<NavTab, string> = {
   dashboard: 'Dashboard',
@@ -48,7 +49,22 @@ const MainAppContent: React.FC = () => {
 
   // Admin Auth Session State
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState<boolean>(() => isAdminSessionActive());
-  const { isDevToolsOpen } = useSecurityDeterrents(isAdminAuthenticated);
+  const { isDevToolsOpen, showDeniedToast } = useSecurityDeterrents(isAdminAuthenticated);
+  const [sessionStartTime] = useState<number>(() => Date.now());
+
+  // Listen to Global Emergency Hard Reset from Supabase (Resets ALL open screens across all devices)
+  useEffect(() => {
+    const checkReset = async () => {
+      const resetTs = await getGlobalResetTimestamp();
+      if (resetTs && resetTs > sessionStartTime) {
+        setAdminSession(false);
+        setIsAdminAuthenticated(false);
+      }
+    };
+    checkReset();
+    const interval = setInterval(checkReset, 3000);
+    return () => clearInterval(interval);
+  }, [sessionStartTime]);
 
   // App Loading States
   const [isInitialLoading, setIsInitialLoading] = useState(true);
@@ -336,6 +352,17 @@ const MainAppContent: React.FC = () => {
         setActiveTab={handleSetActiveTab}
         onOpenAddResident={handleOpenAddResident}
       />
+
+      {/* Access Denied Warning Toast */}
+      {showDeniedToast && (
+        <div className="fixed top-5 left-1/2 -translate-x-1/2 z-[100] bg-[#181919] text-white px-5 py-3 rounded-2xl shadow-floating border border-red-500/50 flex items-center gap-3 animate-bounce select-none">
+          <span className="text-2xl">🖕</span>
+          <div>
+            <div className="font-bold text-xs text-red-400 font-mono tracking-wider">ACCESS DENIED!</div>
+            <div className="text-[10px] font-mono text-gray-300">Developer Tools & Code Inspect are permanently blocked for Resident Privacy.</div>
+          </div>
+        </div>
+      )}
 
       {/* Admin Authentication Guard Modal */}
       <AdminAuthModal

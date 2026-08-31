@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { ShieldCheck, Lock, ArrowRight, AlertCircle, Building2 } from 'lucide-react';
+import { ShieldCheck, Lock, ArrowRight, AlertCircle, Building2, RefreshCw } from 'lucide-react';
 import { verifyAdminPin, setAdminSession } from '../../utils/securityUtils';
+import { triggerGlobalHardReset } from '../../lib/supabaseStorage';
 
 interface AdminAuthModalProps {
   isOpen: boolean;
@@ -10,6 +11,7 @@ interface AdminAuthModalProps {
 export const AdminAuthModal: React.FC<AdminAuthModalProps> = ({ isOpen, onAuthenticated }) => {
   const [pin, setPin] = useState('');
   const [error, setError] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
 
   if (!isOpen) return null;
 
@@ -22,6 +24,17 @@ export const AdminAuthModal: React.FC<AdminAuthModalProps> = ({ isOpen, onAuthen
     } else {
       setError(true);
       setPin('');
+    }
+  };
+
+  const handleHardResetAll = async () => {
+    if (window.confirm('⚡ Are you sure you want to perform a HARD RESET across ALL open screens and devices? This will lock all open sessions.')) {
+      setIsResetting(true);
+      await triggerGlobalHardReset();
+      setAdminSession(false);
+      setPin('');
+      setIsResetting(false);
+      alert('🔒 Global Hard Reset triggered! All open screens across devices have been locked.');
     }
   };
 
@@ -85,8 +98,17 @@ export const AdminAuthModal: React.FC<AdminAuthModalProps> = ({ isOpen, onAuthen
           </button>
         </form>
 
-        <div className="p-4 bg-[#FDFBF7] border-t border-[#F5F2ED] text-center text-[10px] text-[#747878] font-mono">
-          🔒 Encrypted 256-bit Row-Level Security Protected • Resident Portal
+        <div className="p-4 bg-[#FDFBF7] border-t border-[#F5F2ED] flex items-center justify-between text-[10px] text-[#747878] font-mono">
+          <span>🔒 256-bit RLS Protected</span>
+          <button
+            type="button"
+            onClick={handleHardResetAll}
+            disabled={isResetting}
+            className="px-2.5 py-1 rounded bg-red-50 text-red-700 font-bold border border-red-200 hover:bg-red-100 transition-colors flex items-center gap-1 cursor-pointer"
+          >
+            <RefreshCw className={`w-3 h-3 ${isResetting ? 'animate-spin' : ''}`} />
+            <span>⚡ Hard Reset All Screens</span>
+          </button>
         </div>
       </div>
     </div>

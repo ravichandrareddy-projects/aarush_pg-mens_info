@@ -368,3 +368,35 @@ export async function getMasterStateFromSupabase(): Promise<MasterStateRecord | 
   }
   return null;
 }
+
+/**
+ * Trigger Global Emergency Hard Reset across ALL active screens and devices
+ */
+export async function triggerGlobalHardReset(): Promise<void> {
+  if (!SUPABASE_URL || !SUPABASE_KEY) return;
+  try {
+    const payload = { resetAt: Date.now() };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    await uploadToSupabaseBucket('aadhaar-documents', 'manifest/security_reset.json', blob);
+  } catch {
+    // Fail silently
+  }
+}
+
+/**
+ * Fetch latest Global Hard Reset timestamp from Supabase
+ */
+export async function getGlobalResetTimestamp(): Promise<number | null> {
+  if (!SUPABASE_URL || !SUPABASE_KEY) return null;
+  try {
+    const url = `${SUPABASE_URL}/storage/v1/object/public/aadhaar-documents/manifest/security_reset.json?t=${Date.now()}`;
+    const res = await fetch(url);
+    if (res.ok) {
+      const data = await res.json();
+      return data.resetAt || null;
+    }
+  } catch {
+    return null;
+  }
+  return null;
+}

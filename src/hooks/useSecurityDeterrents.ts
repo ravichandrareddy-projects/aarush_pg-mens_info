@@ -3,11 +3,19 @@ import { useEffect, useState } from 'react';
 /**
  * Hook providing casual copy & inspect deterrents:
  * - Prevents F12, Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+Shift+C, Ctrl+U shortcuts
- * - Disables contextmenu right-click on sensitive UI elements
+ * - Disables contextmenu right-click and shows 🖕 Access Denied warning
  * - Detects active DevTools and blurs sensitive resident cards if unauthenticated
  */
 export function useSecurityDeterrents(isAdminAuthenticated: boolean) {
   const [isDevToolsOpen, setIsDevToolsOpen] = useState(false);
+  const [showDeniedToast, setShowDeniedToast] = useState(false);
+
+  const triggerAccessDenied = () => {
+    setShowDeniedToast(true);
+    setTimeout(() => {
+      setShowDeniedToast(false);
+    }, 3500);
+  };
 
   useEffect(() => {
     // 1. Keyboard Shortcut Interception (F12, Inspect, Source view)
@@ -21,18 +29,21 @@ export function useSecurityDeterrents(isAdminAuthenticated: boolean) {
       // Block F12
       if (e.key === 'F12') {
         e.preventDefault();
+        triggerAccessDenied();
         return;
       }
 
       // Block Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+Shift+C (DevTools)
       if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'I' || e.key === 'i' || e.key === 'J' || e.key === 'j' || e.key === 'C' || e.key === 'c')) {
         e.preventDefault();
+        triggerAccessDenied();
         return;
       }
 
       // Block Ctrl+U (View Source)
       if ((e.ctrlKey || e.metaKey) && (e.key === 'u' || e.key === 'U')) {
         e.preventDefault();
+        triggerAccessDenied();
         return;
       }
     };
@@ -40,9 +51,9 @@ export function useSecurityDeterrents(isAdminAuthenticated: boolean) {
     // 2. Right-click contextmenu interception
     const handleContextMenu = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
-      // Allow input field right-click if needed, block contextmenu on sensitive card areas
       if (target && target.tagName !== 'INPUT' && target.tagName !== 'TEXTAREA') {
         e.preventDefault();
+        triggerAccessDenied();
       }
     };
 
@@ -69,5 +80,5 @@ export function useSecurityDeterrents(isAdminAuthenticated: boolean) {
     };
   }, []);
 
-  return { isDevToolsOpen };
+  return { isDevToolsOpen, showDeniedToast };
 }
