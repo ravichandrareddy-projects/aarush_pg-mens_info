@@ -15,16 +15,14 @@ export const QRScannerCollectorView: React.FC<QRScannerCollectorViewProps> = ({
   onClose
 }) => {
   const { floors, getResidentById } = usePG();
-  const [searchQuery, setSearchQuery] = useState(initialRoomNumber);
+  const [selectedFloorId, setSelectedFloorId] = useState<string>('floor1');
+  const [selectedRoomId, setSelectedRoomId] = useState<string>(initialRoomNumber || '101');
   const [copied, setCopied] = useState(false);
   const [remoteSubmissions, setRemoteSubmissions] = useState<RemoteSubmissionRecord[]>([]);
-  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const fetchRemote = async () => {
-    setIsRefreshing(true);
     const subs = await getRemoteSubmissionsFromSupabase();
     setRemoteSubmissions(subs);
-    setIsRefreshing(false);
   };
 
   useEffect(() => {
@@ -35,19 +33,19 @@ export const QRScannerCollectorView: React.FC<QRScannerCollectorViewProps> = ({
 
   // Flatten all rooms across all floors
   const allRooms = floors.flatMap((floor) =>
-    floor.rooms.map((room) => ({
+    (floor.rooms || []).map((room) => ({
       ...room,
       floorName: floor.name
     }))
   );
 
-  // Filter room matching search query (e.g. "101", "102", "501", "G01")
+  // Active Floor & Active Room
+  const selectedFloor = floors.find((f) => f.id === selectedFloorId) || floors[0];
+  const activeFloorRooms = selectedFloor ? selectedFloor.rooms || [] : [];
+
   const currentRoom =
-    allRooms.find(
-      (r) =>
-        r.roomNumber.toLowerCase() === searchQuery.trim().toLowerCase() ||
-        r.id.toLowerCase() === searchQuery.trim().toLowerCase()
-    ) || allRooms[0];
+    allRooms.find((r) => r.roomNumber.toLowerCase() === selectedRoomId.trim().toLowerCase()) ||
+    allRooms[0];
 
   const getPublicBaseUrl = () => {
     const customPublic = import.meta.env.VITE_PUBLIC_WEB_URL;
@@ -85,51 +83,111 @@ export const QRScannerCollectorView: React.FC<QRScannerCollectorViewProps> = ({
   };
 
   return (
-    <div className="space-y-6 max-w-5xl mx-auto pb-12 animate-fade-in">
+    <div className="space-y-6 max-w-6xl mx-auto pb-12 animate-fade-in">
       {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-[#F5F2ED] shadow-subtle">
+      <div className="bg-white p-6 rounded-2xl border border-[#F5F2ED] shadow-subtle flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#181919] text-white text-[10px] font-mono uppercase mb-2">
             <QrCode className="w-3.5 h-3.5 text-[#A8C393]" />
-            <span>Admin QR Collector Tool</span>
+            <span>Admin QR Collector & Scanner Tool</span>
           </div>
           <h1 className="text-2xl font-bold text-[#181919] tracking-tight">
             Room Aadhaar QR Scanner & Submissions
           </h1>
           <p className="text-xs text-[#747878] mt-1 font-mono">
-            Type any room number to view resident Aadhaar uploads or generate scannable QR codes.
+            Select any floor and room to view Aadhaar uploads, generate QR code, or share direct upload link.
           </p>
         </div>
 
-        {/* Room Search Input */}
-        <div className="relative max-w-xs w-full">
-          <Search className="w-4 h-4 text-[#747878] absolute left-3 top-3.5" />
-          <input
-            type="text"
-            placeholder="Type Room Number (e.g. 101, 102, 501)..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-[#F5F2ED] bg-[#FDFBF7] text-xs font-mono font-bold text-[#181919] focus:outline-none focus:border-[#181919]"
-          />
+        <button
+          type="button"
+          onClick={fetchRemote}
+          className="px-3.5 py-2 rounded-xl bg-[#FDFBF7] border border-[#E4E2E2] text-xs font-mono font-bold text-[#181919] hover:bg-[#F5F3F3] transition-all flex items-center gap-2 self-start md:self-auto shadow-xs"
+        >
+          <RefreshCw className="w-4 h-4 text-[#536347]" />
+          <span>Sync Submissions</span>
+        </button>
+      </div>
+
+      {/* SIDE-BY-SIDE FLOOR TABS */}
+      <div className="space-y-3">
+        <label className="block text-xs font-mono font-bold uppercase text-[#747878]">
+          SELECT FLOOR (SIDE-BY-SIDE)
+        </label>
+        <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
+          {floors.map((floor) => {
+            const isFloorSelected = selectedFloorId === floor.id;
+            return (
+              <button
+                key={floor.id}
+                type="button"
+                onClick={() => {
+                  setSelectedFloorId(floor.id);
+                  if (floor.rooms && floor.rooms.length > 0) {
+                    setSelectedRoomId(floor.rooms[0].roomNumber);
+                  }
+                }}
+                className={`px-4 py-2.5 rounded-xl font-mono text-xs font-bold transition-all shrink-0 flex items-center gap-2 ${
+                  isFloorSelected
+                    ? 'bg-[#181919] text-white shadow-subtle'
+                    : 'bg-white text-[#747878] border border-[#F5F2ED] hover:text-[#181919] hover:bg-[#F5F3F3]'
+                }`}
+              >
+                <span>{floor.name}</span>
+                <span className={`px-1.5 py-0.5 rounded-full text-[10px] ${
+                  isFloorSelected ? 'bg-[#536347] text-white' : 'bg-[#F2F7EE] text-[#536347]'
+                }`}>
+                  {floor.rooms ? floor.rooms.length : 0} Rms
+                </span>
+              </button>
+            );
+          })}
         </div>
       </div>
 
-      {/* Quick Room Selector Chips */}
-      <div className="flex items-center gap-1.5 overflow-x-auto pb-2 text-xs font-mono scrollbar-none">
-        <span className="text-[#747878] shrink-0 font-semibold px-1">Quick Select:</span>
-        {['101', '102', '103', '201', '301', '501', '502', '601'].map((rm) => (
-          <button
-            key={rm}
-            onClick={() => setSearchQuery(rm)}
-            className={`px-3 py-1.5 rounded-lg border transition-all shrink-0 ${
-              roomNumber === rm
-                ? 'bg-[#181919] text-white font-bold border-[#181919]'
-                : 'bg-white text-[#181919] border-[#F5F2ED] hover:bg-[#F5F3F3]'
-            }`}
-          >
-            Room {rm}
-          </button>
-        ))}
+      {/* SIDE-BY-SIDE ROOMS GRID OF SELECTED FLOOR */}
+      <div className="space-y-2">
+        <div className="flex items-center justify-between text-xs font-mono">
+          <span className="font-bold uppercase text-[#747878]">
+            {selectedFloor?.name || 'FLOOR'} ROOMS ({activeFloorRooms.length})
+          </span>
+          <span className="text-[#536347]">
+            Active Room: <strong className="text-[#181919]">Room {selectedRoomId}</strong>
+          </span>
+        </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-2">
+          {activeFloorRooms.map((room) => {
+            const isSelected = room.roomNumber === selectedRoomId;
+            const uploadedDocsCount = room.beds.filter((b) => {
+              const r = b.residentId ? getResidentById(b.residentId) : null;
+              return r && r.aadhaarDocumentUrl;
+            }).length;
+
+            return (
+              <button
+                key={room.id}
+                type="button"
+                onClick={() => setSelectedRoomId(room.roomNumber)}
+                className={`p-3 rounded-xl border text-left transition-all flex flex-col justify-between cursor-pointer ${
+                  isSelected
+                    ? 'bg-[#181919] text-white border-[#181919] shadow-subtle ring-2 ring-[#536347]'
+                    : 'bg-white border-[#F5F2ED] hover:border-[#181919] text-[#181919]'
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <span className="font-mono font-bold text-sm">R-{room.roomNumber}</span>
+                  <QrCode className={`w-3.5 h-3.5 ${isSelected ? 'text-[#A8C393]' : 'text-[#747878]'}`} />
+                </div>
+                <div className="text-[10px] font-mono mt-1 text-right">
+                  <span className={isSelected ? 'text-[#A8C393] font-bold' : 'text-[#536347]'}>
+                    {uploadedDocsCount}/{room.sharingCapacity} Docs
+                  </span>
+                </div>
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {currentRoom && (
