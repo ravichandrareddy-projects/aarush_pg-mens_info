@@ -265,6 +265,32 @@ export async function recordSubmissionInSupabase(record: Omit<RemoteSubmissionRe
     const blob = new Blob([JSON.stringify(updated, null, 2)], { type: 'application/json' });
 
     await uploadToSupabaseBucket('aadhaar-documents', 'manifest/submissions.json', blob);
+
+    // Also update master_state.json directly so 5s polling keeps photoUrl & aadhaarDocumentUrl
+    try {
+      const master = await getMasterStateFromSupabase();
+      if (master && master.residents && Array.isArray(master.residents)) {
+        const updatedMasterResidents = master.residents.map((r: any) => {
+          if (
+            (record.residentId && r.id === record.residentId) ||
+            (r.roomNumber === record.roomNumber && r.fullName.trim().toLowerCase() === record.residentName.trim().toLowerCase())
+          ) {
+            return {
+              ...r,
+              photoUrl: record.photoUrl || r.photoUrl,
+              aadhaarDocumentUrl: record.aadhaarDocumentUrl || r.aadhaarDocumentUrl,
+              aadhaarNumber: record.aadhaarNumber || r.aadhaarNumber,
+              phone: record.phone || r.phone
+            };
+          }
+          return r;
+        });
+
+        await saveMasterStateToSupabase({ residents: updatedMasterResidents });
+      }
+    } catch (mErr) {
+      console.warn('Notice updating master_state in recordSubmission:', mErr);
+    }
   } catch (err) {
     console.error('Error saving remote submission:', err);
   }
