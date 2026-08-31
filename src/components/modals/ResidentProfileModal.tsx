@@ -58,9 +58,17 @@ export const ResidentProfileModal: React.FC<ResidentProfileModalProps> = ({
         {/* Header */}
         <div className="p-6 border-b border-[#F5F2ED] bg-[#FDFBF7] flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-full bg-[#536347] text-white font-bold flex items-center justify-center text-lg shadow-subtle">
-              {resident.fullName.charAt(0)}
-            </div>
+            {resident.photoUrl ? (
+              <img
+                src={resident.photoUrl}
+                alt={resident.fullName}
+                className="w-12 h-12 rounded-full object-cover border border-[#536347] shadow-subtle"
+              />
+            ) : (
+              <div className="w-12 h-12 rounded-full bg-[#536347] text-white font-bold flex items-center justify-center text-lg shadow-subtle">
+                {resident.fullName.charAt(0)}
+              </div>
+            )}
             <div>
               <div className="flex items-center gap-2">
                 <h2 className="text-xl font-bold text-[#181919]">{resident.fullName}</h2>

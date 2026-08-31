@@ -41,8 +41,8 @@ export const RoomQRCollectorModal: React.FC<RoomQRCollectorModalProps> = ({
     return origin;
   };
 
-  const baseOrigin = getPublicBaseUrl();
-  const submissionUrl = `${baseOrigin}${window.location.pathname}?collectRoom=${encodeURIComponent(roomNumber)}`;
+  const baseOrigin = getPublicBaseUrl().replace(/\/$/, '');
+  const submissionUrl = `${baseOrigin}/?collectRoom=${encodeURIComponent(roomNumber)}`;
 
   // WhatsApp share link formatted message
   const whatsappMessage = encodeURIComponent(

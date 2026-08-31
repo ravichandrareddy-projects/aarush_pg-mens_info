@@ -158,9 +158,17 @@ export const ResidentsView: React.FC<ResidentsViewProps> = ({ onOpenAddResident,
                 {/* Header */}
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-[#536347] text-white font-bold flex items-center justify-center text-sm shadow-subtle">
-                      {res.fullName.charAt(0)}
-                    </div>
+                    {res.photoUrl ? (
+                      <img
+                        src={res.photoUrl}
+                        alt={res.fullName}
+                        className="w-10 h-10 rounded-full object-cover border border-[#536347] shadow-subtle"
+                      />
+                    ) : (
+                      <div className="w-10 h-10 rounded-full bg-[#536347] text-white font-bold flex items-center justify-center text-sm shadow-subtle">
+                        {res.fullName.charAt(0)}
+                      </div>
+                    )}
                     <div>
                       <h3 className="font-semibold text-base text-[#181919] group-hover:text-[#536347] transition-colors">
                         {res.fullName}

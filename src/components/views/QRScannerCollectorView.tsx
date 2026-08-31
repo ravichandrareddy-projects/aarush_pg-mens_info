@@ -64,9 +64,9 @@ export const QRScannerCollectorView: React.FC<QRScannerCollectorViewProps> = ({
     return origin;
   };
 
-  const baseOrigin = getPublicBaseUrl();
+  const baseOrigin = getPublicBaseUrl().replace(/\/$/, '');
   const roomNumber = currentRoom ? currentRoom.roomNumber : '101';
-  const submissionUrl = `${baseOrigin}${window.location.pathname}?collectRoom=${encodeURIComponent(roomNumber)}`;
+  const submissionUrl = `${baseOrigin}/?collectRoom=${encodeURIComponent(roomNumber)}`;
 
   const whatsappMessage = encodeURIComponent(
     `🏢 *Aarush Mens Luxury PG - Document Submission*\n\n` +

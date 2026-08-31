@@ -188,9 +188,17 @@ export const FloorsRoomsView: React.FC<FloorsRoomsViewProps> = ({
                     {isOccupied && resident ? (
                       <div className="space-y-2 pt-1 pb-3">
                         <div className="flex items-center gap-2">
-                          <div className="w-8 h-8 rounded-full bg-[#536347] text-white flex items-center justify-center text-xs font-bold">
-                            {resident.fullName.charAt(0)}
-                          </div>
+                          {resident.photoUrl ? (
+                            <img
+                              src={resident.photoUrl}
+                              alt={resident.fullName}
+                              className="w-8 h-8 rounded-full object-cover border border-[#536347]"
+                            />
+                          ) : (
+                            <div className="w-8 h-8 rounded-full bg-[#536347] text-white flex items-center justify-center text-xs font-bold">
+                              {resident.fullName.charAt(0)}
+                            </div>
+                          )}
                           <div>
                             <p className="font-semibold text-sm text-[#181919]">{resident.fullName}</p>
                             <a
