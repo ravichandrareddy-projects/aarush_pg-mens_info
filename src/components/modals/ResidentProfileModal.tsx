@@ -23,6 +23,7 @@ import { Resident } from '../../types/pg';
 import { formatDayAndYear } from '../../utils/dateUtils';
 import { recordSubmissionInSupabase, eraseResidentDocumentsFromSupabase } from '../../lib/supabaseStorage';
 import { downloadAadhaarFile } from '../../utils/downloadUtils';
+import { maskAadhaarNumber } from '../../utils/securityUtils';
 
 interface ResidentProfileModalProps {
   residentId: string | null;
@@ -451,7 +452,7 @@ export const ResidentProfileModal: React.FC<ResidentProfileModalProps> = ({
                       </div>
                     ) : (
                       <span className="font-bold text-sm text-[#181919]">
-                        {showFullAadhaar ? resident.aadhaarNumber || 'Not provided' : maskAadhaar(resident.aadhaarNumber)}
+                        {showFullAadhaar ? resident.aadhaarNumber || 'Not provided' : maskAadhaarNumber(resident.aadhaarNumber)}
                       </span>
                     )}
                   </div>

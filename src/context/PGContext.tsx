@@ -239,19 +239,16 @@ export const PGProvider: React.FC<{ children: React.ReactNode }> = ({ children }
     return () => clearInterval(interval);
   }, []);
 
-  // Permanent local storage persistence & 2-way Supabase Master Sync for residents, payments, activities
+  // 2-way Supabase Master Sync for residents, payments, activities (No raw unencrypted localStorage caching of resident PII)
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY_RESIDENTS, JSON.stringify(residents));
     saveMasterStateToSupabase({ residents, payments, activities });
   }, [residents]);
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY_PAYMENTS, JSON.stringify(payments));
     saveMasterStateToSupabase({ residents, payments, activities });
   }, [payments]);
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY_ACTIVITIES, JSON.stringify(activities));
     saveMasterStateToSupabase({ residents, payments, activities });
   }, [activities]);
 

@@ -2,18 +2,27 @@ import { supabase, isSupabaseConfigured } from './supabase';
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://xwgdchtvodsfzblcagfy.supabase.co';
 const SUPABASE_KEY =
-  import.meta.env.VITE_SUPABASE_SERVICE_ROLE_KEY ||
   import.meta.env.VITE_SUPABASE_ANON_KEY ||
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh3Z2RjaHR2b2RzZnpibGNhZ2Z5Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4ODA4MDAzMiwiZXhwIjoyMTAzNjU2MDMyfQ.blp7iP6KxeZMwPjs9Xj_Z2Dows1rS_0GlJUCgyRcRdM';
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh3Z2RjaHR2b2RzZnpibGNhZ2Z5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgwODAwMzIsImV4cCI6MjEwMzY1NjAzMn0.sWLmTdEdFNaLWM7VUgfh1LOFd6GUqvqjfwHpNlU7s0E';
 
 /**
- * Upload file to Supabase Storage with automatic fail-safe REST API fallback
+ * Upload file to Supabase Storage securely using Anon Key with RLS
  */
 async function uploadToSupabaseBucket(bucketName: string, filePath: string, file: File | Blob): Promise<string | null> {
   if (!SUPABASE_URL || !SUPABASE_KEY) return null;
 
-  // 1. Direct REST API Upload with Service Role authorization (Guarantees 100% upload success by bypassing RLS)
   try {
+    if (supabase) {
+      const { data, error } = await supabase.storage.from(bucketName).upload(filePath, file, {
+        cacheControl: '3600',
+        upsert: true
+      });
+      if (!error && data) {
+        const { data: publicUrlData } = supabase.storage.from(bucketName).getPublicUrl(data.path);
+        return publicUrlData.publicUrl;
+      }
+    }
+
     const endpoint = `${SUPABASE_URL}/storage/v1/object/${bucketName}/${filePath}`;
     const response = await fetch(endpoint, {
       method: 'POST',
@@ -27,31 +36,10 @@ async function uploadToSupabaseBucket(bucketName: string, filePath: string, file
     });
 
     if (response.ok) {
-      const publicUrl = `${SUPABASE_URL}/storage/v1/object/public/${bucketName}/${filePath}`;
-      console.log(`[Supabase Upload Success] ${bucketName}/${filePath} -> ${publicUrl}`);
-      return publicUrl;
-    } else {
-      const errText = await response.text();
-      console.warn(`Supabase REST storage upload notice [${bucketName}]:`, errText);
+      return `${SUPABASE_URL}/storage/v1/object/public/${bucketName}/${filePath}`;
     }
-  } catch (err) {
-    console.warn(`Direct REST upload exception [${bucketName}]:`, err);
-  }
-
-  // 2. Fallback to standard Supabase JS client
-  try {
-    if (supabase) {
-      const { data, error } = await supabase.storage.from(bucketName).upload(filePath, file, {
-        cacheControl: '3600',
-        upsert: true
-      });
-      if (!error && data) {
-        const { data: publicUrlData } = supabase.storage.from(bucketName).getPublicUrl(data.path);
-        return publicUrlData.publicUrl;
-      }
-    }
-  } catch (err) {
-    console.error(`JS Client upload exception [${bucketName}]:`, err);
+  } catch {
+    // Fail silently in production without leaking paths or keys
   }
 
   return null;

@@ -24,6 +24,9 @@ import { GlobalSearchModal } from './components/modals/GlobalSearchModal';
 import { InitialSplashScreen, ScreenTransitionLoader } from './components/layout/LoadingScreens';
 import { ResidentSubmissionView } from './components/views/ResidentSubmissionView';
 import { QRScannerCollectorView } from './components/views/QRScannerCollectorView';
+import { AdminAuthModal } from './components/modals/AdminAuthModal';
+import { isAdminSessionActive, setAdminSession } from './utils/securityUtils';
+import { useSecurityDeterrents } from './hooks/useSecurityDeterrents';
 
 const tabTitles: Record<NavTab, string> = {
   dashboard: 'Dashboard',
@@ -42,6 +45,10 @@ const MainAppContent: React.FC = () => {
   // URL Query param check for resident QR self-submission
   const searchParams = new URLSearchParams(window.location.search);
   const collectRoomParam = searchParams.get('collectRoom') || searchParams.get('room');
+
+  // Admin Auth Session State
+  const [isAdminAuthenticated, setIsAdminAuthenticated] = useState<boolean>(() => isAdminSessionActive());
+  const { isDevToolsOpen } = useSecurityDeterrents(isAdminAuthenticated);
 
   // App Loading States
   const [isInitialLoading, setIsInitialLoading] = useState(true);
@@ -263,6 +270,10 @@ const MainAppContent: React.FC = () => {
           onOpenSearch={() => setIsSearchOpen(true)}
           onOpenAddResident={handleOpenAddResident}
           onOpenQRScanner={() => handleSetActiveTab('qr-scanner')}
+          onAdminLogout={() => {
+            setAdminSession(false);
+            setIsAdminAuthenticated(false);
+          }}
         />
 
         {/* Content Canvas */}
@@ -324,6 +335,12 @@ const MainAppContent: React.FC = () => {
         activeTab={activeTab}
         setActiveTab={handleSetActiveTab}
         onOpenAddResident={handleOpenAddResident}
+      />
+
+      {/* Admin Authentication Guard Modal */}
+      <AdminAuthModal
+        isOpen={!isAdminAuthenticated && !collectRoomParam}
+        onAuthenticated={() => setIsAdminAuthenticated(true)}
       />
 
       {/* Application Modals */}

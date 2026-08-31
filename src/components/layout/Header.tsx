@@ -1,5 +1,5 @@
 import React from 'react';
-import { Search, Building2, Plus, Sparkles, QrCode } from 'lucide-react';
+import { Search, Building2, Plus, Sparkles, QrCode, Lock } from 'lucide-react';
 import { usePG } from '../../context/PGContext';
 import { NavTab } from './Sidebar';
 
@@ -8,9 +8,10 @@ interface HeaderProps {
   onOpenSearch: () => void;
   onOpenAddResident: () => void;
   onOpenQRScanner?: () => void;
+  onAdminLogout?: () => void;
 }
 
-export const Header: React.FC<HeaderProps> = ({ activeTab, onOpenSearch, onOpenAddResident, onOpenQRScanner }) => {
+export const Header: React.FC<HeaderProps> = ({ activeTab, onOpenSearch, onOpenAddResident, onOpenQRScanner, onAdminLogout }) => {
   const { theme, setTheme, stats } = usePG();
 
   const titleMap: Record<NavTab, string> = {
@@ -113,6 +114,17 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, onOpenSearch, onOpenA
           <span className="hidden sm:inline">Add Resident</span>
           <span className="sm:hidden">Add</span>
         </button>
+
+        {/* Lock / Admin Logout Button */}
+        {onAdminLogout && (
+          <button
+            onClick={onAdminLogout}
+            className="p-2 rounded-lg bg-red-50 text-red-700 hover:bg-red-100 transition-colors border border-red-200"
+            title="Lock Admin Session"
+          >
+            <Lock className="w-4 h-4" />
+          </button>
+        )}
       </div>
     </header>
   );
