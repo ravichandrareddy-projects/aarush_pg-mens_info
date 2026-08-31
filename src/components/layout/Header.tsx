@@ -1,5 +1,5 @@
 import React from 'react';
-import { Search, Building2, Plus, Sparkles } from 'lucide-react';
+import { Search, Building2, Plus, Sparkles, QrCode } from 'lucide-react';
 import { usePG } from '../../context/PGContext';
 import { NavTab } from './Sidebar';
 
@@ -7,9 +7,10 @@ interface HeaderProps {
   activeTab: NavTab;
   onOpenSearch: () => void;
   onOpenAddResident: () => void;
+  onOpenQRScanner?: () => void;
 }
 
-export const Header: React.FC<HeaderProps> = ({ activeTab, onOpenSearch, onOpenAddResident }) => {
+export const Header: React.FC<HeaderProps> = ({ activeTab, onOpenSearch, onOpenAddResident, onOpenQRScanner }) => {
   const { theme, setTheme, stats } = usePG();
 
   const titleMap: Record<NavTab, string> = {
@@ -63,6 +64,18 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, onOpenSearch, onOpenA
 
       {/* Right Controls */}
       <div className="flex items-center gap-2">
+        {/* Mobile QR Scanner Shortcut Button */}
+        {onOpenQRScanner && (
+          <button
+            onClick={onOpenQRScanner}
+            className="md:hidden flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#181919] text-white text-xs font-mono font-bold hover:bg-black transition-colors"
+            title="Open QR Aadhaar Collector"
+          >
+            <QrCode className="w-4 h-4 text-[#A8C393]" />
+            <span>QR</span>
+          </button>
+        )}
+
         {/* Mobile Search Button */}
         <button
           onClick={onOpenSearch}

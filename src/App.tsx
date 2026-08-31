@@ -252,6 +252,7 @@ const MainAppContent: React.FC = () => {
           activeTab={activeTab}
           onOpenSearch={() => setIsSearchOpen(true)}
           onOpenAddResident={handleOpenAddResident}
+          onOpenQRScanner={() => handleSetActiveTab('qr-scanner')}
         />
 
         {/* Content Canvas */}

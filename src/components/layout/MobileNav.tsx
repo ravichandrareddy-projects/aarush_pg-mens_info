@@ -1,4 +1,3 @@
-import React, { useState } from 'react';
 import {
   Home,
   Grid,
@@ -9,7 +8,8 @@ import {
   BarChart3,
   Settings,
   X,
-  Plus
+  Plus,
+  QrCode
 } from 'lucide-react';
 import { NavTab } from './Sidebar';
 import { usePG } from '../../context/PGContext';
@@ -48,7 +48,17 @@ export const MobileNav: React.FC<MobileNavProps> = ({ activeTab, setActiveTab, o
               </button>
             </div>
 
-            <div className="grid grid-cols-3 gap-3 pt-2">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
+              <button
+                onClick={() => handleNavClick('qr-scanner')}
+                className={`p-3 rounded-xl flex flex-col items-center gap-2 border text-center transition-all ${
+                  activeTab === 'qr-scanner' ? 'bg-[#181919] text-white border-[#181919]' : 'bg-[#FDFBF7] border-[#F5F2ED]'
+                }`}
+              >
+                <QrCode className="w-5 h-5 text-[#536347]" />
+                <span className="text-xs font-bold">QR Collector</span>
+              </button>
+
               <button
                 onClick={() => handleNavClick('payments')}
                 className={`p-3 rounded-xl flex flex-col items-center gap-2 border text-center transition-all ${
