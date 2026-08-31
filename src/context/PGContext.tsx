@@ -699,7 +699,33 @@ export const PGProvider: React.FC<{ children: React.ReactNode }> = ({ children }
   };
 
   const getResidentById = (residentId: string): Resident | undefined => {
-    return residents.find((r) => r.id === residentId);
+    if (!residentId) return undefined;
+    const cleanId = residentId.trim().toLowerCase();
+
+    // Strategy 1: Exact ID match
+    let found = residents.find((r) => r.id === residentId);
+    if (found) return found;
+
+    // Strategy 2: Case-insensitive ID match
+    found = residents.find((r) => r.id.toLowerCase() === cleanId);
+    if (found) return found;
+
+    // Strategy 3: bedId match
+    found = residents.find((r) => r.bedId && r.bedId.toLowerCase() === cleanId);
+    if (found) return found;
+
+    // Strategy 4: Full Name match
+    found = residents.find((r) => r.fullName && r.fullName.trim().toLowerCase() === cleanId);
+    if (found) return found;
+
+    // Strategy 5: Room + Bed Number format (e.g. "101-1", "101-b1", "101")
+    found = residents.find(
+      (r) =>
+        r.roomNumber === residentId ||
+        `${r.roomNumber}-${r.bedNumber}`.toLowerCase() === cleanId ||
+        `${r.roomNumber}-b${r.bedNumber}`.toLowerCase() === cleanId
+    );
+    return found;
   };
 
   return (

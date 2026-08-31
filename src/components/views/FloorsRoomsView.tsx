@@ -167,15 +167,24 @@ export const FloorsRoomsView: React.FC<FloorsRoomsViewProps> = ({
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {selectedRoom.beds.map((bed) => {
-              const resident = bed.residentId ? getResidentById(bed.residentId) : undefined;
-              const isOccupied = bed.status === 'OCCUPIED';
+              const resident = (bed.residentId ? getResidentById(bed.residentId) : undefined) ||
+                getResidentById(`${selectedRoom.roomNumber}-B${bed.bedNumber}`) ||
+                getResidentById(`${selectedRoom.roomNumber}-${bed.bedNumber}`) ||
+                getResidentById(selectedRoom.roomNumber);
+
+              const isOccupied = bed.status === 'OCCUPIED' || Boolean(resident);
 
               return (
                 <div
                   key={bed.id}
+                  onClick={() => {
+                    if (isOccupied && resident) {
+                      onViewResident(resident.id);
+                    }
+                  }}
                   className={`p-5 rounded-xl border flex flex-col justify-between transition-all ${
                     isOccupied
-                      ? 'bg-white border-[#D4E6C2] shadow-subtle'
+                      ? 'bg-white border-[#D4E6C2] shadow-subtle cursor-pointer hover:border-[#536347]'
                       : 'bg-[#FDFBF7] border-[#F5F2ED] border-dashed hover:border-[#181919]'
                   }`}
                 >
@@ -254,7 +263,16 @@ export const FloorsRoomsView: React.FC<FloorsRoomsViewProps> = ({
                           >
                             {resident.paymentStatus === 'PAID' ? 'PAID ✓' : 'Confirm Paid'}
                           </button>
-                          <span className="text-[10px] text-[#536347] font-medium">View →</span>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onViewResident(resident.id);
+                            }}
+                            className="text-[10px] text-[#536347] font-bold hover:underline"
+                          >
+                            View →
+                          </button>
                         </div>
                       </div>
                     ) : (
@@ -269,8 +287,12 @@ export const FloorsRoomsView: React.FC<FloorsRoomsViewProps> = ({
                   <div className="pt-3 border-t border-[#F5F2ED]">
                     {isOccupied && resident ? (
                       <button
-                        onClick={() => onViewResident(resident.id)}
-                        className="w-full py-2 px-3 rounded-lg border border-[#F5F2ED] bg-white text-xs font-medium text-[#181919] hover:bg-[#F5F3F3] transition-colors flex items-center justify-center gap-1.5"
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onViewResident(resident.id);
+                        }}
+                        className="w-full py-2 px-3 rounded-lg border border-[#D4E6C2] bg-[#F2F7EE] text-xs font-bold text-[#536347] hover:bg-[#536347] hover:text-white transition-colors flex items-center justify-center gap-1.5 shadow-xs cursor-pointer"
                       >
                         <User className="w-3.5 h-3.5" />
                         <span>View Resident Profile</span>
