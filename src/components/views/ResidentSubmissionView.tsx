@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ShieldCheck, Upload, CheckCircle2, Building2, User, FileText, ArrowRight, Lock, Trash2, AlertTriangle, AlertCircle } from 'lucide-react';
 import { usePG } from '../../context/PGContext';
-import { uploadResidentPhoto, uploadAadhaarDocument, recordSubmissionInSupabase, eraseResidentDocumentsFromSupabase } from '../../lib/supabaseStorage';
+import { uploadResidentPhoto, uploadAadhaarDocument, recordSubmissionInSupabase, eraseResidentDocumentsFromSupabase, getRemoteSubmissionsFromSupabase } from '../../lib/supabaseStorage';
 
 interface ResidentSubmissionViewProps {
   roomNumber: string;
@@ -13,6 +13,30 @@ export const ResidentSubmissionView: React.FC<ResidentSubmissionViewProps> = ({
   onFinished
 }) => {
   const { floors, residents, getResidentById, updateResident } = usePG();
+
+  // Remote Submissions List from Supabase for Already-Submitted Checks
+  const [remoteSubmissions, setRemoteSubmissions] = useState<any[]>([]);
+
+  useEffect(() => {
+    getRemoteSubmissionsFromSupabase().then((subs) => {
+      if (subs && Array.isArray(subs)) {
+        setRemoteSubmissions(subs);
+      }
+    });
+  }, [roomNumber]);
+
+  // Helper: Check if resident already submitted documents to Supabase
+  const isResidentSubmitted = (resId?: string, resName?: string) => {
+    if (!remoteSubmissions || remoteSubmissions.length === 0) return false;
+    return remoteSubmissions.some((s) => {
+      if (s.roomNumber !== roomNumber) return false;
+      if (resId && s.residentId === resId) return Boolean(s.aadhaarDocumentUrl || s.photoUrl);
+      if (resName && s.residentName && s.residentName.trim().toLowerCase() === resName.trim().toLowerCase()) {
+        return Boolean(s.aadhaarDocumentUrl || s.photoUrl);
+      }
+      return false;
+    });
+  };
 
   // Flexible Room Lookup
   let targetRoom: any = null;
@@ -92,8 +116,8 @@ export const ResidentSubmissionView: React.FC<ResidentSubmissionViewProps> = ({
       const res = getResidentById(residentId);
       if (res) {
         setResidentName(res.fullName);
-        setPhone(res.phone);
-        setAadhaarNumber(res.aadhaarNumber || '');
+        setPhone(''); // PRIVACY LOCK: Never pre-fill phone number!
+        setAadhaarNumber(''); // PRIVACY LOCK: Never pre-fill Aadhaar number!
       }
     } else {
       setSelectedResidentId('');
@@ -290,29 +314,49 @@ export const ResidentSubmissionView: React.FC<ResidentSubmissionViewProps> = ({
               <div className="space-y-3">
                 {targetRoom.beds.map((b: any) => {
                   const res = b.residentId ? getResidentById(b.residentId) : null;
+                  const alreadySubmitted = isResidentSubmitted(b.residentId, res?.fullName);
 
                   return (
                     <div
                       key={b.id}
                       onClick={() => handleBedSelect(b.id, b.residentId)}
-                      className="p-4 rounded-xl border border-[#F5F2ED] bg-white hover:border-[#181919] hover:bg-[#FDFBF7] cursor-pointer transition-all flex items-center justify-between shadow-xs group"
+                      className={`p-4 rounded-xl border transition-all flex items-center justify-between shadow-xs group cursor-pointer ${
+                        alreadySubmitted
+                          ? 'border-emerald-200 bg-emerald-50/50 hover:bg-emerald-50'
+                          : 'border-[#F5F2ED] bg-white hover:border-[#181919] hover:bg-[#FDFBF7]'
+                      }`}
                     >
                       <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-xl bg-[#181919] text-white font-mono font-bold text-xs flex items-center justify-center shadow-xs">
+                        <div className={`w-9 h-9 rounded-xl font-mono font-bold text-xs flex items-center justify-center shadow-xs ${
+                          alreadySubmitted ? 'bg-emerald-700 text-white' : 'bg-[#181919] text-white'
+                        }`}>
                           B{b.bedNumber}
                         </div>
                         <div>
-                          <p className="font-bold text-[#181919] text-sm group-hover:underline">
-                            {res ? res.fullName : `Bed ${b.bedNumber} (Empty Bed)`}
+                          <p className="font-bold text-[#181919] text-sm group-hover:underline flex items-center gap-2">
+                            <span>{res ? res.fullName : `Bed ${b.bedNumber} (Empty Bed)`}</span>
+                            {alreadySubmitted && (
+                              <span className="text-[10px] bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded font-mono font-bold">
+                                ✅ VERIFIED
+                              </span>
+                            )}
                           </p>
                           <p className="text-xs text-[#747878] font-mono mt-0.5">
-                            {res ? `Phone: ${res.phone.slice(-4).padStart(10, '*')}` : 'Tap to register as new resident'}
+                            {alreadySubmitted
+                              ? '🔒 Documents already submitted & locked'
+                              : res
+                              ? 'Tap to submit your documents'
+                              : 'Tap to register as new resident'}
                           </p>
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-1.5 text-xs font-mono font-bold text-[#536347] bg-[#F2F7EE] px-3 py-1.5 rounded-lg border border-[#D4E6C2] group-hover:bg-[#181919] group-hover:text-white transition-all">
-                        <span>Tap to Fill Details</span>
+                      <div className={`flex items-center gap-1.5 text-xs font-mono font-bold px-3 py-1.5 rounded-lg border transition-all ${
+                        alreadySubmitted
+                          ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
+                          : 'bg-[#F2F7EE] text-[#536347] border-[#D4E6C2] group-hover:bg-[#181919] group-hover:text-white'
+                      }`}>
+                        <span>{alreadySubmitted ? 'Already Submitted' : 'Tap to Fill Details'}</span>
                         <ArrowRight className="w-3.5 h-3.5" />
                       </div>
                     </div>
@@ -322,6 +366,29 @@ export const ResidentSubmissionView: React.FC<ResidentSubmissionViewProps> = ({
             ) : (
               <p className="text-xs text-red-500 font-mono text-center">Room {roomNumber} not found in system.</p>
             )}
+          </div>
+        ) : isResidentSubmitted(selectedResidentId, residentName) ? (
+          /* SCREEN 2 (LOCKED): IF ALREADY SUBMITTED, SHOW LOCKED STATUS */
+          <div className="bg-white p-6 md:p-8 rounded-2xl border border-[#F5F2ED] shadow-floating space-y-5 text-center animate-fade-in">
+            <div className="w-14 h-14 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center mx-auto shadow-subtle">
+              <CheckCircle2 className="w-7 h-7" />
+            </div>
+            <h2 className="text-xl font-bold text-[#181919]">Documents Already Submitted!</h2>
+            <p className="text-xs text-[#747878] font-mono max-w-md mx-auto">
+              Documents for <strong>{residentName}</strong> (Room {roomNumber}) have already been verified and locked.
+            </p>
+            <div className="p-4 rounded-xl bg-[#FDFBF7] border border-[#F5F2ED] text-xs text-[#536347] font-mono max-w-md mx-auto">
+              🔒 Privacy Protection Active: Previously submitted details and Aadhaar documents are protected from public viewing.
+            </div>
+            <div className="pt-2">
+              <button
+                type="button"
+                onClick={() => setSelectedBedId(null)}
+                className="py-2.5 px-5 rounded-xl bg-[#181919] text-white font-mono font-bold text-xs hover:bg-black transition-all"
+              >
+                ← Back to Name List
+              </button>
+            </div>
           </div>
         ) : (
           /* SCREEN 2: DEDICATED SUBMISSION FORM FOR SELECTED RESIDENT */
