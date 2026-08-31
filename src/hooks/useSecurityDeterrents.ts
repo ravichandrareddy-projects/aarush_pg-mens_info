@@ -3,8 +3,8 @@ import { useEffect, useState } from 'react';
 /**
  * Hook providing casual copy & inspect deterrents:
  * - Prevents F12, Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+Shift+C, Ctrl+U shortcuts
- * - Disables contextmenu right-click and shows 🖕 Access Denied warning
- * - Detects active DevTools and blurs sensitive resident cards if unauthenticated
+ * - Intercepts contextmenu right-click on ALL elements including QR scanner & forms
+ * - Displays 🖕 Access Denied warning overlay
  */
 export function useSecurityDeterrents(isAdminAuthenticated: boolean) {
   const [isDevToolsOpen, setIsDevToolsOpen] = useState(false);
@@ -20,15 +20,10 @@ export function useSecurityDeterrents(isAdminAuthenticated: boolean) {
   useEffect(() => {
     // 1. Keyboard Shortcut Interception (F12, Inspect, Source view)
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Allow normal typing inside input fields and textareas
-      const target = e.target as HTMLElement;
-      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')) {
-        return;
-      }
-
       // Block F12
       if (e.key === 'F12') {
         e.preventDefault();
+        e.stopPropagation();
         triggerAccessDenied();
         return;
       }
@@ -36,6 +31,7 @@ export function useSecurityDeterrents(isAdminAuthenticated: boolean) {
       // Block Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+Shift+C (DevTools)
       if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'I' || e.key === 'i' || e.key === 'J' || e.key === 'j' || e.key === 'C' || e.key === 'c')) {
         e.preventDefault();
+        e.stopPropagation();
         triggerAccessDenied();
         return;
       }
@@ -43,18 +39,17 @@ export function useSecurityDeterrents(isAdminAuthenticated: boolean) {
       // Block Ctrl+U (View Source)
       if ((e.ctrlKey || e.metaKey) && (e.key === 'u' || e.key === 'U')) {
         e.preventDefault();
+        e.stopPropagation();
         triggerAccessDenied();
         return;
       }
     };
 
-    // 2. Right-click contextmenu interception
+    // 2. Universal Right-click contextmenu interception for all screens & QR scanner
     const handleContextMenu = (e: MouseEvent) => {
-      const target = e.target as HTMLElement;
-      if (target && target.tagName !== 'INPUT' && target.tagName !== 'TEXTAREA') {
-        e.preventDefault();
-        triggerAccessDenied();
-      }
+      e.preventDefault();
+      e.stopPropagation();
+      triggerAccessDenied();
     };
 
     // 3. Lightweight DevTools Detection (Window threshold monitoring)
@@ -68,14 +63,14 @@ export function useSecurityDeterrents(isAdminAuthenticated: boolean) {
       }
     };
 
-    window.addEventListener('keydown', handleKeyDown);
-    window.addEventListener('contextmenu', handleContextMenu);
+    window.addEventListener('keydown', handleKeyDown, true);
+    window.addEventListener('contextmenu', handleContextMenu, true);
     window.addEventListener('resize', checkDevTools);
     checkDevTools();
 
     return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-      window.removeEventListener('contextmenu', handleContextMenu);
+      window.removeEventListener('keydown', handleKeyDown, true);
+      window.removeEventListener('contextmenu', handleContextMenu, true);
       window.removeEventListener('resize', checkDevTools);
     };
   }, []);
