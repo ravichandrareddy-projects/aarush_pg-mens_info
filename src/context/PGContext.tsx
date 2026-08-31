@@ -87,7 +87,22 @@ export const PGProvider: React.FC<{ children: React.ReactNode }> = ({ children }
   const [residents, setResidents] = useState<Resident[]>(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY_RESIDENTS);
-      return saved ? JSON.parse(saved) : (ALL_INITIAL_RESIDENTS as Resident[]);
+      const list = saved ? JSON.parse(saved) : (ALL_INITIAL_RESIDENTS as Resident[]);
+      if (!Array.isArray(list)) return ALL_INITIAL_RESIDENTS as Resident[];
+      return list.map((r: any) => ({
+        ...r,
+        id: r.id || `res_${Date.now()}_${Math.random().toString(36).substring(2, 5)}`,
+        fullName: r.fullName || 'Resident',
+        phone: r.phone || '9999999999',
+        roomNumber: r.roomNumber || '101',
+        bedNumber: r.bedNumber || 1,
+        monthlyRent: typeof r.monthlyRent === 'number' ? r.monthlyRent : 8000,
+        amountPaid: typeof r.amountPaid === 'number' ? r.amountPaid : 0,
+        amountPending: typeof r.amountPending === 'number' ? r.amountPending : 8000,
+        paymentStatus: r.paymentStatus || 'UNPAID',
+        status: r.status || 'ACTIVE',
+        rentDueDay: r.rentDueDay || 1
+      }));
     } catch {
       return ALL_INITIAL_RESIDENTS as Resident[];
     }

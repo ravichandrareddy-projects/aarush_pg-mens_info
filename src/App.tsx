@@ -83,34 +83,6 @@ const MainAppContent: React.FC = () => {
 
   const [isSearchOpen, setIsSearchOpen] = useState(false);
 
-  // Continuously push history state whenever navigation/modal state changes
-  useEffect(() => {
-    window.history.pushState(
-      {
-        activeTab,
-        selectedFloorId,
-        selectedRoomId,
-        isSearchOpen,
-        selectedResidentId,
-        isAddResidentOpen,
-        isRecordPaymentOpen,
-        moveResidentId,
-        markLeftResidentId
-      },
-      ''
-    );
-  }, [
-    activeTab,
-    selectedFloorId,
-    selectedRoomId,
-    isSearchOpen,
-    selectedResidentId,
-    isAddResidentOpen,
-    isRecordPaymentOpen,
-    moveResidentId,
-    markLeftResidentId
-  ]);
-
   // Android Hardware Back Button & Browser PopState Navigation Handler
   useEffect(() => {
     const handleBackStep = (): boolean => {
@@ -140,25 +112,24 @@ const MainAppContent: React.FC = () => {
         return true;
       }
 
-      // 2. Room Detail (e.g. Room 101) -> Floor Rooms List (e.g. 1st Floor rooms list)
+      // 2. Room Detail -> Floor Rooms List
       if (activeTab === 'floors' && selectedRoomId !== null) {
         setSelectedRoomId(null);
         return true;
       }
 
-      // 3. Floor Rooms List -> All Floors Grid (e.g. 1st Floor rooms list -> All Floors grid)
+      // 3. Floor Rooms List -> All Floors Grid
       if (activeTab === 'floors' && selectedFloorId !== null) {
         setSelectedFloorId(null);
         return true;
       }
 
-      // 4. Any tab/screen other than Home Screen ('dashboard') -> Return to Home Screen
+      // 4. Any tab other than Home Screen -> Return to Home Screen
       if (activeTab !== 'dashboard') {
         handleSetActiveTab('dashboard');
         return true;
       }
 
-      // 5. Already on Home Screen ('dashboard') with no drilldowns or modals open -> Exit / Close App
       return false;
     };
 
@@ -169,15 +140,8 @@ const MainAppContent: React.FC = () => {
       }
     });
 
-    const handlePopState = (e: PopStateEvent) => {
-      handleBackStep();
-    };
-
-    window.addEventListener('popstate', handlePopState);
-
     return () => {
       backListener.then((h) => h.remove());
-      window.removeEventListener('popstate', handlePopState);
     };
   }, [
     isSearchOpen,
