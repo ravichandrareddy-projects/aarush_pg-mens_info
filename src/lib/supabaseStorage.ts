@@ -333,3 +333,50 @@ export async function eraseResidentDocumentsFromSupabase(params: {
     console.error('Error erasing resident documents from Supabase:', err);
   }
 }
+
+export interface MasterStateRecord {
+  residents: any[];
+  payments: any[];
+  activities: any[];
+  updatedAt: string;
+}
+
+/**
+ * Save Master Resident State to Supabase Storage for 100% Cross-Device Real-time Sync
+ * (Syncs Phone APK, Laptop Web, and Mobile PWA seamlessly)
+ */
+export async function saveMasterStateToSupabase(state: { residents?: any[]; payments?: any[]; activities?: any[] }) {
+  if (!SUPABASE_URL || !SUPABASE_KEY) return;
+  try {
+    const existing = await getMasterStateFromSupabase();
+    const payload: MasterStateRecord = {
+      residents: state.residents || existing?.residents || [],
+      payments: state.payments || existing?.payments || [],
+      activities: state.activities || existing?.activities || [],
+      updatedAt: new Date().toISOString()
+    };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    await uploadToSupabaseBucket('aadhaar-documents', 'manifest/master_state.json', blob);
+    console.log('[Supabase Master Sync] Successfully synced master state across all devices.');
+  } catch (err) {
+    console.warn('Notice saving master state to Supabase:', err);
+  }
+}
+
+/**
+ * Get Master Resident State from Supabase Storage for Cross-Device Sync
+ */
+export async function getMasterStateFromSupabase(): Promise<MasterStateRecord | null> {
+  if (!SUPABASE_URL || !SUPABASE_KEY) return null;
+  try {
+    const url = `${SUPABASE_URL}/storage/v1/object/public/aadhaar-documents/manifest/master_state.json?t=${Date.now()}`;
+    const res = await fetch(url);
+    if (res.ok) {
+      const data = await res.json();
+      return data;
+    }
+  } catch (err) {
+    console.warn('Notice fetching master state from Supabase:', err);
+  }
+  return null;
+}

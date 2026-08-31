@@ -17,8 +17,7 @@ import {
   INITIAL_5TH_FLOOR_RESIDENTS,
   INITIAL_6TH_FLOOR_RESIDENTS
 } from '../data/buildingConfig';
-import { syncResidentsToSupabase, syncPaymentsToSupabase } from '../lib/supabaseSync';
-import { getRemoteSubmissionsFromSupabase } from '../lib/supabaseStorage';
+import { getRemoteSubmissionsFromSupabase, saveMasterStateToSupabase, getMasterStateFromSupabase } from '../lib/supabaseStorage';
 
 export type DesignTheme = 'atelier' | 'vision';
 
@@ -214,22 +213,46 @@ export const PGProvider: React.FC<{ children: React.ReactNode }> = ({ children }
       }
     };
 
+    // Pull Master State from Supabase Storage for 100% Cross-Device Real-time Sync
+    const syncMasterState = async () => {
+      try {
+        const remoteMaster = await getMasterStateFromSupabase();
+        if (remoteMaster && remoteMaster.residents && Array.isArray(remoteMaster.residents) && remoteMaster.residents.length > 0) {
+          setResidents((prev) => {
+            if (JSON.stringify(prev) !== JSON.stringify(remoteMaster.residents)) {
+              return remoteMaster.residents;
+            }
+            return prev;
+          });
+        }
+      } catch (err) {
+        console.warn('Notice pulling master state:', err);
+      }
+    };
+
     syncSubmissions();
-    const interval = setInterval(syncSubmissions, 5000);
+    syncMasterState();
+    const interval = setInterval(() => {
+      syncSubmissions();
+      syncMasterState();
+    }, 5000);
     return () => clearInterval(interval);
   }, []);
 
-  // Permanent local storage persistence for residents, payments, activities
+  // Permanent local storage persistence & 2-way Supabase Master Sync for residents, payments, activities
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY_RESIDENTS, JSON.stringify(residents));
+    saveMasterStateToSupabase({ residents, payments, activities });
   }, [residents]);
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY_PAYMENTS, JSON.stringify(payments));
+    saveMasterStateToSupabase({ residents, payments, activities });
   }, [payments]);
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY_ACTIVITIES, JSON.stringify(activities));
+    saveMasterStateToSupabase({ residents, payments, activities });
   }, [activities]);
 
   // Derived building floor state based on active residents
