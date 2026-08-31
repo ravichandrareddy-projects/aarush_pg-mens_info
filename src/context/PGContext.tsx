@@ -144,11 +144,10 @@ export const PGProvider: React.FC<{ children: React.ReactNode }> = ({ children }
             for (const sub of remoteSubs) {
               if (!sub.roomNumber || !sub.residentName) continue;
 
-              // Find existing resident match
+              // Strict resident matching by residentId OR exact name + roomNumber
               const existingIdx = nextResidents.findIndex(
                 (res) =>
                   (sub.residentId && res.id === sub.residentId) ||
-                  (sub.bedId && res.bedId === sub.bedId && res.roomNumber === sub.roomNumber) ||
                   (sub.roomNumber === res.roomNumber && sub.residentName.trim().toLowerCase() === res.fullName.trim().toLowerCase())
               );
 
@@ -170,7 +169,7 @@ export const PGProvider: React.FC<{ children: React.ReactNode }> = ({ children }
                   };
                 }
               } else {
-                // Auto-create new resident object for new room occupant submission
+                // Auto-create distinct resident object for new occupant submission
                 updated = true;
                 const newResId = sub.residentId || `res_${sub.roomNumber}_${Date.now()}_${Math.random().toString(36).substring(2, 5)}`;
                 const bedId = sub.bedId || `${sub.roomNumber}-B1`;
@@ -240,6 +239,11 @@ export const PGProvider: React.FC<{ children: React.ReactNode }> = ({ children }
     activeResidents.forEach((r) => {
       if (r.bedId) {
         residentMap.set(r.bedId, r);
+        residentMap.set(r.bedId.toLowerCase(), r);
+      }
+      if (r.roomNumber && r.bedNumber) {
+        residentMap.set(`${r.roomNumber}-B${r.bedNumber}`, r);
+        residentMap.set(`${r.roomNumber}-${r.bedNumber}`, r);
       }
     });
 
@@ -248,7 +252,7 @@ export const PGProvider: React.FC<{ children: React.ReactNode }> = ({ children }
       rooms: floor.rooms.map((room) => ({
         ...room,
         beds: room.beds.map((bed) => {
-          const res = residentMap.get(bed.id);
+          const res = residentMap.get(bed.id) || residentMap.get(bed.id.toLowerCase());
           if (res) {
             return {
               ...bed,

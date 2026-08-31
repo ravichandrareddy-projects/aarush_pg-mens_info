@@ -73,6 +73,20 @@ export function getFloorFolderName(roomNumber: string): string {
   }
 }
 
+function getFileExtension(file: File | Blob, defaultExt: string): string {
+  if ('name' in file && file.name && file.name.includes('.')) {
+    const ext = file.name.split('.').pop();
+    if (ext) return `.${ext.toLowerCase()}`;
+  }
+  if (file.type) {
+    if (file.type.includes('png')) return '.png';
+    if (file.type.includes('jpeg') || file.type.includes('jpg')) return '.jpg';
+    if (file.type.includes('webp')) return '.webp';
+    if (file.type.includes('pdf')) return '.pdf';
+  }
+  return defaultExt;
+}
+
 /**
  * Upload resident photo to Supabase Storage ('resident-photos' bucket)
  * Saves in Floor-wise / Room-wise folder hierarchy e.g. 1st_Floor/Room_101/photo.jpg
@@ -83,7 +97,9 @@ export async function uploadResidentPhoto(
   roomNumber?: string,
   floorName?: string
 ): Promise<string | null> {
-  const sanitizeName = fileName.replace(/[^a-zA-Z0-9_.-]/g, '_');
+  const ext = getFileExtension(file, '.jpg');
+  const fullFileName = fileName.toLowerCase().endsWith(ext) ? fileName : `${fileName}${ext}`;
+  const sanitizeName = fullFileName.replace(/[^a-zA-Z0-9_.-]/g, '_');
   const floorFolder = floorName
     ? floorName.replace(/[^a-zA-Z0-9_.-]/g, '_')
     : roomNumber
@@ -107,7 +123,9 @@ export async function uploadAadhaarDocument(
   roomNumber?: string,
   floorName?: string
 ): Promise<string | null> {
-  const sanitizeName = fileName.replace(/[^a-zA-Z0-9_.-]/g, '_');
+  const ext = getFileExtension(file, '.pdf');
+  const fullFileName = fileName.toLowerCase().endsWith(ext) ? fileName : `${fileName}${ext}`;
+  const sanitizeName = fullFileName.replace(/[^a-zA-Z0-9_.-]/g, '_');
   const floorFolder = floorName
     ? floorName.replace(/[^a-zA-Z0-9_.-]/g, '_')
     : roomNumber
