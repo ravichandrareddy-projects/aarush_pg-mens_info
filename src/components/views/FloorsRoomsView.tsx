@@ -49,8 +49,21 @@ export const FloorsRoomsView: React.FC<FloorsRoomsViewProps> = ({
   const [isQRModalOpen, setIsQRModalOpen] = useState(false);
   const [qrRoomTarget, setQrRoomTarget] = useState<{ roomNumber: string; floorName: string; beds: Bed[] } | null>(null);
 
-  const selectedFloor = floors.find((f) => f.id === selectedFloorId);
-  const selectedRoom = selectedFloor?.rooms.find((r) => r.id === selectedRoomId);
+  let selectedFloor = floors.find((f) => f.id === selectedFloorId);
+  let selectedRoom = selectedFloor?.rooms.find((r) => r.id === selectedRoomId || r.roomNumber === selectedRoomId);
+
+  // Fallback room lookup across all floors if selectedFloor was not set yet
+  if (!selectedRoom && selectedRoomId) {
+    for (const fl of floors) {
+      if (!fl.rooms) continue;
+      const rm = fl.rooms.find((r) => r.id === selectedRoomId || r.roomNumber === selectedRoomId);
+      if (rm) {
+        selectedRoom = rm;
+        selectedFloor = fl;
+        break;
+      }
+    }
+  }
 
   // Reset drill-down helpers
   const handleBackToFloors = () => {
@@ -64,8 +77,9 @@ export const FloorsRoomsView: React.FC<FloorsRoomsViewProps> = ({
 
   // ROOM DETAIL VIEW
   if (selectedFloor && selectedRoom) {
-    const occupiedCount = selectedRoom.beds.filter((b) => b.status === 'OCCUPIED').length;
-    const availableCount = selectedRoom.sharingCapacity - occupiedCount;
+    const beds = selectedRoom.beds || [];
+    const occupiedCount = beds.filter((b) => b && b.status === 'OCCUPIED').length;
+    const availableCount = (selectedRoom.sharingCapacity || 0) - occupiedCount;
 
     return (
       <div className="space-y-6 max-w-5xl mx-auto pb-12">
@@ -220,7 +234,7 @@ export const FloorsRoomsView: React.FC<FloorsRoomsViewProps> = ({
                           </div>
                           <div>
                             <span>Rent:</span>{' '}
-                            <span className="text-[#181919] font-medium">₹{resident.monthlyRent.toLocaleString()}</span>
+                            <span className="text-[#181919] font-medium">₹{(resident.monthlyRent || 8000).toLocaleString()}</span>
                           </div>
                         </div>
 
