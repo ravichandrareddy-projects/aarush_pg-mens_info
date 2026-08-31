@@ -47,6 +47,26 @@ export const ResidentProfileModal: React.FC<ResidentProfileModalProps> = ({
   const resident = getResidentById(residentId);
   if (!resident) return null;
 
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [editedName, setEditedName] = useState(resident.fullName || '');
+
+  const handleSaveName = async () => {
+    if (!editedName.trim()) return;
+    const cleanName = editedName.trim();
+    updateResident(resident.id, { fullName: cleanName });
+    await recordSubmissionInSupabase({
+      roomNumber: resident.roomNumber,
+      bedId: resident.bedId,
+      residentId: resident.id,
+      residentName: cleanName,
+      phone: resident.phone,
+      aadhaarNumber: resident.aadhaarNumber || '',
+      aadhaarDocumentUrl: resident.aadhaarDocumentUrl,
+      photoUrl: resident.photoUrl
+    });
+    setIsEditingName(false);
+  };
+
   const [isEditingAadhaar, setIsEditingAadhaar] = useState(false);
   const [editedAadhaar, setEditedAadhaar] = useState(resident.aadhaarNumber || '');
 
@@ -122,7 +142,46 @@ export const ResidentProfileModal: React.FC<ResidentProfileModalProps> = ({
             )}
             <div>
               <div className="flex items-center gap-2">
-                <h2 className="text-xl font-bold text-[#181919]">{resident.fullName}</h2>
+                {isEditingName ? (
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      value={editedName}
+                      onChange={(e) => setEditedName(e.target.value)}
+                      placeholder="Enter Resident Name"
+                      className="px-2.5 py-1 border border-[#181919] rounded-lg text-sm font-bold text-[#181919] focus:outline-none w-48 font-sans"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleSaveName}
+                      className="px-2.5 py-1 bg-[#181919] text-white text-xs font-semibold rounded-lg hover:bg-[#536347]"
+                    >
+                      Save
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setIsEditingName(false)}
+                      className="px-2 py-1 text-xs text-[#747878] hover:underline"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <h2 className="text-xl font-bold text-[#181919]">{resident.fullName}</h2>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEditedName(resident.fullName);
+                        setIsEditingName(true);
+                      }}
+                      className="text-xs text-[#536347] font-semibold hover:underline flex items-center gap-0.5 ml-1"
+                      title="Edit Resident Name"
+                    >
+                      ✏️ Edit
+                    </button>
+                  </>
+                )}
                 <span
                   className={`text-[10px] font-mono font-semibold px-2.5 py-0.5 rounded-full ${
                     resident.status === 'ACTIVE'
