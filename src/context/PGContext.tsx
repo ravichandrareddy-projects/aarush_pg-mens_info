@@ -213,40 +213,55 @@ export const PGProvider: React.FC<{ children: React.ReactNode }> = ({ children }
       }
     };
 
-    // Pull Master State from Supabase Storage for 100% Cross-Device Real-time Sync
+    // Pull Master State & Submissions from Supabase Storage for 100% Real-time Sync
     const syncMasterState = async () => {
       try {
-        const remoteMaster = await getMasterStateFromSupabase();
+        const [remoteMaster, remoteSubs] = await Promise.all([
+          getMasterStateFromSupabase(),
+          getRemoteSubmissionsFromSupabase()
+        ]);
+
         if (remoteMaster && remoteMaster.residents && Array.isArray(remoteMaster.residents)) {
           setResidents((prev) => {
+            const baseList = [...remoteMaster.residents];
+
+            // Merge remoteSubmissions document URLs into baseList residents
+            if (remoteSubs && Array.isArray(remoteSubs)) {
+              remoteSubs.forEach((sub) => {
+                if (!sub.roomNumber || !sub.residentName) return;
+                const idx = baseList.findIndex(
+                  (r) =>
+                    (sub.residentId && r.id === sub.residentId) ||
+                    (r.roomNumber === sub.roomNumber && r.fullName.trim().toLowerCase() === sub.residentName.trim().toLowerCase())
+                );
+                if (idx !== -1) {
+                  baseList[idx] = {
+                    ...baseList[idx],
+                    photoUrl: sub.photoUrl || baseList[idx].photoUrl,
+                    aadhaarDocumentUrl: sub.aadhaarDocumentUrl || baseList[idx].aadhaarDocumentUrl,
+                    aadhaarNumber: sub.aadhaarNumber || baseList[idx].aadhaarNumber
+                  };
+                }
+              });
+            }
+
             // Merge remote residents with any local residents not in remote
             const remoteMap = new Map<string, Resident>();
-            remoteMaster.residents.forEach((r: Resident) => remoteMap.set(r.id, r));
-
-            let hasNewMerged = false;
-            const merged = [...remoteMaster.residents];
+            baseList.forEach((r: Resident) => remoteMap.set(r.id, r));
 
             prev.forEach((localRes) => {
               if (!remoteMap.has(localRes.id)) {
-                // Keep locally added resident that hasn't synced to remote yet
-                const isDuplicateNameRoom = remoteMaster.residents.some(
+                const isDuplicateNameRoom = baseList.some(
                   (rr: Resident) => rr.fullName.trim().toLowerCase() === localRes.fullName.trim().toLowerCase() && rr.roomNumber === localRes.roomNumber
                 );
                 if (!isDuplicateNameRoom) {
-                  merged.unshift(localRes);
-                  hasNewMerged = true;
+                  baseList.unshift(localRes);
                 }
               }
             });
 
-            if (hasNewMerged) {
-              // Immediately push merged list back to Supabase
-              saveMasterStateToSupabase({ residents: merged });
-              return merged;
-            }
-
-            if (JSON.stringify(prev) !== JSON.stringify(remoteMaster.residents)) {
-              return remoteMaster.residents;
+            if (JSON.stringify(prev) !== JSON.stringify(baseList)) {
+              return baseList;
             }
             return prev;
           });
@@ -264,19 +279,6 @@ export const PGProvider: React.FC<{ children: React.ReactNode }> = ({ children }
     }, 5000);
     return () => clearInterval(interval);
   }, []);
-
-  // 2-way Supabase Master Sync for residents, payments, activities (No raw unencrypted localStorage caching of resident PII)
-  useEffect(() => {
-    saveMasterStateToSupabase({ residents, payments, activities });
-  }, [residents]);
-
-  useEffect(() => {
-    saveMasterStateToSupabase({ residents, payments, activities });
-  }, [payments]);
-
-  useEffect(() => {
-    saveMasterStateToSupabase({ residents, payments, activities });
-  }, [activities]);
 
   // Derived building floor state based on active residents
   const floors = useMemo(() => {
