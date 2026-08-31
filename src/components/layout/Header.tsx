@@ -18,6 +18,7 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, onOpenSearch, onOpenA
     residents: 'Residents',
     'empty-beds': 'Empty Beds Explorer',
     payments: 'Payments & Revenue',
+    'qr-scanner': 'QR Aadhaar Collector',
     reports: 'Analytics & Reports',
     settings: 'Building Settings',
   };

@@ -9,11 +9,12 @@ import {
   Settings,
   PlusCircle,
   Building2,
-  Sparkles
+  Sparkles,
+  QrCode
 } from 'lucide-react';
 import { usePG } from '../../context/PGContext';
 
-export type NavTab = 'dashboard' | 'floors' | 'residents' | 'empty-beds' | 'payments' | 'reports' | 'settings';
+export type NavTab = 'dashboard' | 'floors' | 'residents' | 'empty-beds' | 'payments' | 'reports' | 'settings' | 'qr-scanner';
 
 interface SidebarProps {
   activeTab: NavTab;
@@ -30,6 +31,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, onOpe
     { id: 'residents' as NavTab, label: 'Residents', icon: Users, badge: stats.occupiedBeds },
     { id: 'empty-beds' as NavTab, label: 'Empty Beds', icon: BedDouble, badge: stats.emptyBeds, badgeVariant: 'olive' },
     { id: 'payments' as NavTab, label: 'Payments', icon: CreditCard, badge: stats.pendingResidents > 0 ? stats.pendingResidents : undefined, badgeVariant: 'pending' },
+    { id: 'qr-scanner' as NavTab, label: 'QR Collector', icon: QrCode },
     { id: 'reports' as NavTab, label: 'Reports', icon: BarChart3 },
     { id: 'settings' as NavTab, label: 'Settings', icon: Settings },
   ];

@@ -23,6 +23,7 @@ import { GlobalSearchModal } from './components/modals/GlobalSearchModal';
 
 import { InitialSplashScreen, ScreenTransitionLoader } from './components/layout/LoadingScreens';
 import { ResidentSubmissionView } from './components/views/ResidentSubmissionView';
+import { QRScannerCollectorView } from './components/views/QRScannerCollectorView';
 
 const tabTitles: Record<NavTab, string> = {
   dashboard: 'Dashboard',
@@ -30,6 +31,7 @@ const tabTitles: Record<NavTab, string> = {
   residents: 'Residents Directory',
   'empty-beds': 'Empty Beds Explorer',
   payments: 'Payments & Revenue',
+  'qr-scanner': 'QR Aadhaar Collector',
   reports: 'Analytics & Reports',
   settings: 'Settings'
 };
@@ -295,6 +297,8 @@ const MainAppContent: React.FC = () => {
                   onViewResident={(resId) => setSelectedResidentId(resId)}
                 />
               )}
+
+              {activeTab === 'qr-scanner' && <QRScannerCollectorView />}
 
               {activeTab === 'reports' && <ReportsView />}
 
