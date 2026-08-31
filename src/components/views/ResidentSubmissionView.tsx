@@ -52,6 +52,7 @@ export const ResidentSubmissionView: React.FC<ResidentSubmissionViewProps> = ({
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [submissionError, setSubmissionError] = useState<string | null>(null);
 
   // Set initial bed if occupants exist
   useEffect(() => {
@@ -98,6 +99,7 @@ export const ResidentSubmissionView: React.FC<ResidentSubmissionViewProps> = ({
     }
 
     setIsSubmitting(true);
+    setSubmissionError(null);
 
     let finalPhotoUrl = '';
     let finalAadhaarUrl = '';
@@ -105,12 +107,18 @@ export const ResidentSubmissionView: React.FC<ResidentSubmissionViewProps> = ({
     try {
       if (photoFile) {
         const pUrl = await uploadResidentPhoto(photoFile, `${residentName}_photo`, roomNumber, targetFloorName);
-        if (pUrl) finalPhotoUrl = pUrl;
+        if (!pUrl) {
+          throw new Error(`Failed to upload photo to Supabase. Please check file format and network connection.`);
+        }
+        finalPhotoUrl = pUrl;
       }
 
       if (aadhaarFile) {
         const aUrl = await uploadAadhaarDocument(aadhaarFile, `${residentName}_aadhaar`, roomNumber, targetFloorName);
-        if (aUrl) finalAadhaarUrl = aUrl;
+        if (!aUrl) {
+          throw new Error(`Failed to upload Aadhaar card document to Supabase. Please check file format and network connection.`);
+        }
+        finalAadhaarUrl = aUrl;
       }
 
       // Record submission in Supabase manifest so Admin App syncs automatically
@@ -135,10 +143,12 @@ export const ResidentSubmissionView: React.FC<ResidentSubmissionViewProps> = ({
         }
       }
 
+      // 100% Verified Success
       setIsSubmitted(true);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error submitting resident documents:', err);
-      alert('Error submitting documents. Please try again.');
+      const errMsg = err?.message || String(err);
+      setSubmissionError(errMsg);
     } finally {
       setIsSubmitting(false);
     }
@@ -354,6 +364,26 @@ export const ResidentSubmissionView: React.FC<ResidentSubmissionViewProps> = ({
               </div>
             </div>
           </div>
+
+          {/* Error Log Card */}
+          {submissionError && (
+            <div className="p-4 rounded-xl bg-red-50 border border-red-200 text-left space-y-2 text-xs text-red-900 animate-fade-in">
+              <div className="flex items-center gap-2 font-bold text-red-700">
+                <ShieldCheck className="w-4 h-4 text-red-600" />
+                <span>Upload Failed - Error Details:</span>
+              </div>
+              <p className="font-mono bg-white p-2.5 rounded border border-red-200 text-red-800 break-all text-[11px]">
+                {submissionError}
+              </p>
+              <button
+                type="button"
+                onClick={() => setSubmissionError(null)}
+                className="w-full py-2 rounded-lg bg-red-600 text-white font-bold hover:bg-red-700 transition-colors text-xs"
+              >
+                Try Upload Again ↺
+              </button>
+            </div>
+          )}
 
           {/* Privacy Security Note */}
           <div className="p-3 rounded-xl bg-[#FDFBF7] border border-[#F5F2ED] flex items-start gap-2 text-[11px] text-[#747878]">

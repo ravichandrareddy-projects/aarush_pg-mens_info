@@ -47,6 +47,7 @@ export const FloorsRoomsView: React.FC<FloorsRoomsViewProps> = ({
 
   const [sharingFilter, setSharingFilter] = useState<'ALL' | 3 | 4 | 5>('ALL');
   const [isQRModalOpen, setIsQRModalOpen] = useState(false);
+  const [qrRoomTarget, setQrRoomTarget] = useState<{ roomNumber: string; floorName: string; beds: Bed[] } | null>(null);
 
   const selectedFloor = floors.find((f) => f.id === selectedFloorId);
   const selectedRoom = selectedFloor?.rooms.find((r) => r.id === selectedRoomId);
@@ -270,10 +271,13 @@ export const FloorsRoomsView: React.FC<FloorsRoomsViewProps> = ({
 
         <RoomQRCollectorModal
           isOpen={isQRModalOpen}
-          onClose={() => setIsQRModalOpen(false)}
-          floorName={selectedFloor.name}
-          roomNumber={selectedRoom.roomNumber}
-          beds={selectedRoom.beds}
+          onClose={() => {
+            setIsQRModalOpen(false);
+            setQrRoomTarget(null);
+          }}
+          floorName={qrRoomTarget?.floorName || selectedFloor?.name || ''}
+          roomNumber={qrRoomTarget?.roomNumber || selectedRoom?.roomNumber || ''}
+          beds={qrRoomTarget?.beds || selectedRoom?.beds || []}
         />
       </div>
     );
@@ -431,15 +435,45 @@ export const FloorsRoomsView: React.FC<FloorsRoomsViewProps> = ({
                       </div>
                     </div>
 
-                    <div className="flex items-center justify-between text-xs text-[#181919] font-medium pt-2 group-hover:translate-x-0.5 transition-transform">
-                      <span>Manage Beds</span>
-                      <ArrowRight className="w-4 h-4 text-[#747878] group-hover:text-[#181919]" />
+                    <div className="flex items-center justify-between text-xs text-[#181919] font-medium pt-2 border-t border-[#F5F2ED] mt-2">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setQrRoomTarget({
+                            roomNumber: room.roomNumber,
+                            floorName: selectedFloor.name,
+                            beds: room.beds
+                          });
+                          setIsQRModalOpen(true);
+                        }}
+                        className="py-1 px-2.5 rounded-lg bg-[#181919] text-white text-[11px] font-mono font-bold hover:bg-black transition-all flex items-center gap-1 shadow-xs"
+                      >
+                        <QrCode className="w-3.5 h-3.5 text-[#A8C393]" />
+                        <span>Collect Docs</span>
+                      </button>
+
+                      <div className="flex items-center gap-1 group-hover:translate-x-0.5 transition-transform">
+                        <span>Manage Beds</span>
+                        <ArrowRight className="w-4 h-4 text-[#747878] group-hover:text-[#181919]" />
+                      </div>
                     </div>
                   </div>
                 );
               })}
             </div>
           )}
+
+          <RoomQRCollectorModal
+            isOpen={isQRModalOpen}
+            onClose={() => {
+              setIsQRModalOpen(false);
+              setQrRoomTarget(null);
+            }}
+            floorName={qrRoomTarget?.floorName || selectedFloor?.name || ''}
+            roomNumber={qrRoomTarget?.roomNumber || ''}
+            beds={qrRoomTarget?.beds || []}
+          />
         </div>
       </div>
     );
