@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { PGProvider, usePG } from './context/PGContext';
 import { Sidebar, NavTab } from './components/layout/Sidebar';
 import { MobileNav } from './components/layout/MobileNav';
@@ -83,9 +83,47 @@ const MainAppContent: React.FC = () => {
 
   const [isSearchOpen, setIsSearchOpen] = useState(false);
 
+  // Track if current state change was triggered by back navigation
+  const isBackActionRef = useRef(false);
+
+  // Push history state whenever navigating deeper (without loop)
+  useEffect(() => {
+    if (isBackActionRef.current) {
+      isBackActionRef.current = false;
+      return;
+    }
+
+    const isDeep =
+      isSearchOpen ||
+      Boolean(selectedResidentId) ||
+      Boolean(moveResidentId) ||
+      Boolean(markLeftResidentId) ||
+      isRecordPaymentOpen ||
+      isAddResidentOpen ||
+      selectedRoomId !== null ||
+      selectedFloorId !== null ||
+      activeTab !== 'dashboard';
+
+    if (isDeep) {
+      window.history.pushState({ appNavStep: true }, '');
+    }
+  }, [
+    activeTab,
+    selectedFloorId,
+    selectedRoomId,
+    isSearchOpen,
+    selectedResidentId,
+    moveResidentId,
+    markLeftResidentId,
+    isRecordPaymentOpen,
+    isAddResidentOpen
+  ]);
+
   // Android Hardware Back Button & Browser PopState Navigation Handler
   useEffect(() => {
     const handleBackStep = (): boolean => {
+      isBackActionRef.current = true;
+
       // 1. Close Open Modals
       if (isSearchOpen) {
         setIsSearchOpen(false);
@@ -130,6 +168,7 @@ const MainAppContent: React.FC = () => {
         return true;
       }
 
+      isBackActionRef.current = false;
       return false;
     };
 
@@ -140,8 +179,15 @@ const MainAppContent: React.FC = () => {
       }
     });
 
+    const handlePopState = (e: PopStateEvent) => {
+      handleBackStep();
+    };
+
+    window.addEventListener('popstate', handlePopState);
+
     return () => {
       backListener.then((h) => h.remove());
+      window.removeEventListener('popstate', handlePopState);
     };
   }, [
     isSearchOpen,
