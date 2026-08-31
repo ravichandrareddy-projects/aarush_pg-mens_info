@@ -512,6 +512,9 @@ export const ResidentProfileModal: React.FC<ResidentProfileModalProps> = ({
                         <img
                           src={resident.aadhaarDocumentUrl}
                           alt="Aadhaar Card Preview"
+                          onError={(e) => {
+                            (e.currentTarget as HTMLElement).parentElement?.style.setProperty('display', 'none');
+                          }}
                           className="max-h-56 rounded-lg object-contain border border-[#E4E2E2]"
                         />
                       </div>

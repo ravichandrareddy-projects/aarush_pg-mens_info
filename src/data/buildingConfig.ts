@@ -4695,29 +4695,7 @@ export const INITIAL_6TH_FLOOR_RESIDENTS: Resident[] = [
     emergencyRelationship: 'Parent',
     createdAt: '2026-08-01T00:00:00.000Z'
   },
-  {
-    id: 'res-610-b2',
-    fullName: 'Sai Kumar',
-    phone: '7013147368',
-    aadhaarNumber: 'XXXX-XXXX-7368',
-    address: 'Aarush Mens PG, Room 610',
-    floorId: 'floor6',
-    roomId: '610',
-    roomNumber: '610',
-    bedId: '610-B2',
-    bedNumber: 2,
-    monthlyRent: 7000,
-    rentDueDay: 13,
-    amountPaid: 0,
-    amountPending: 7000,
-    paymentStatus: 'UNPAID',
-    joiningDate: '2026-08-01',
-    status: 'ACTIVE',
-    emergencyName: 'Guardian',
-    emergencyPhone: '7013147368',
-    emergencyRelationship: 'Parent',
-    createdAt: '2026-08-13T00:00:00.000Z'
-  },
+
   {
     id: 'res-610-b3',
     fullName: 'Gnaneswar',
