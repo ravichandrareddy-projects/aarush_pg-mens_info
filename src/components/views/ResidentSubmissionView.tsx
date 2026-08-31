@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ShieldCheck, Upload, CheckCircle2, Building2, User, FileText, ArrowRight, Lock, Trash2, AlertTriangle } from 'lucide-react';
+import { ShieldCheck, Upload, CheckCircle2, Building2, User, FileText, ArrowRight, Lock, Trash2, AlertTriangle, AlertCircle } from 'lucide-react';
 import { usePG } from '../../context/PGContext';
 import { uploadResidentPhoto, uploadAadhaarDocument, recordSubmissionInSupabase, eraseResidentDocumentsFromSupabase } from '../../lib/supabaseStorage';
 
@@ -392,9 +392,19 @@ export const ResidentSubmissionView: React.FC<ResidentSubmissionViewProps> = ({
 
             {/* FILE UPLOADS */}
             <div className="space-y-4 pt-2 border-t border-[#F5F2ED]">
-              <label className="block text-xs font-mono font-bold uppercase text-[#747878]">
-                3. UPLOAD AADHAAR CARD & PROFILE PHOTO
-              </label>
+              <div className="flex items-center justify-between">
+                <label className="block text-xs font-mono font-bold uppercase text-[#747878]">
+                  3. UPLOAD AADHAAR CARD & PROFILE PHOTO
+                </label>
+                <span className="px-2 py-0.5 rounded bg-amber-100 text-amber-900 text-[10px] font-mono font-bold border border-amber-300">
+                  ⚠️ MAX 3MB PER FILE
+                </span>
+              </div>
+
+              <div className="p-3 rounded-xl bg-amber-50/80 border border-amber-200 text-xs text-amber-900 font-mono flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
+                <span>Notice: Please upload photos or screenshots under <strong>3MB max size</strong> per file for fast processing.</span>
+              </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                 {/* Aadhaar File Input */}
@@ -406,8 +416,13 @@ export const ResidentSubmissionView: React.FC<ResidentSubmissionViewProps> = ({
                       accept="image/*,.pdf"
                       onChange={(e) => {
                         if (e.target.files && e.target.files[0]) {
-                          setAadhaarFile(e.target.files[0]);
-                          setAadhaarFileName(e.target.files[0].name);
+                          const f = e.target.files[0];
+                          if (f.size > 3 * 1024 * 1024) {
+                            alert('⚠️ File size exceeds 3MB limit! Please upload an image or screenshot under 3MB.');
+                            return;
+                          }
+                          setAadhaarFile(f);
+                          setAadhaarFileName(f.name);
                         }
                       }}
                       className="absolute inset-0 opacity-0 cursor-pointer"
@@ -417,7 +432,9 @@ export const ResidentSubmissionView: React.FC<ResidentSubmissionViewProps> = ({
                       <span className="font-medium text-[#181919]">
                         {aadhaarFileName ? aadhaarFileName : 'Select Aadhaar Photo / PDF'}
                       </span>
-                      <span className="text-[10px] text-[#747878]">Max 10MB file</span>
+                      <span className="text-[10px] font-mono font-bold text-[#536347] bg-[#F2F7EE] px-2 py-0.5 rounded border border-[#D4E6C2]">
+                        Max 3MB File
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -432,6 +449,10 @@ export const ResidentSubmissionView: React.FC<ResidentSubmissionViewProps> = ({
                       onChange={(e) => {
                         if (e.target.files && e.target.files[0]) {
                           const f = e.target.files[0];
+                          if (f.size > 3 * 1024 * 1024) {
+                            alert('⚠️ Photo size exceeds 3MB limit! Please upload a photo or screenshot under 3MB.');
+                            return;
+                          }
                           setPhotoFile(f);
                           setPhotoPreview(URL.createObjectURL(f));
                         }
@@ -446,6 +467,9 @@ export const ResidentSubmissionView: React.FC<ResidentSubmissionViewProps> = ({
                       )}
                       <span className="font-medium text-[#181919]">
                         {photoFile ? photoFile.name : 'Take or Select Passport Photo'}
+                      </span>
+                      <span className="text-[10px] font-mono font-bold text-[#536347] bg-[#F2F7EE] px-2 py-0.5 rounded border border-[#D4E6C2]">
+                        Max 3MB File
                       </span>
                     </div>
                   </div>
