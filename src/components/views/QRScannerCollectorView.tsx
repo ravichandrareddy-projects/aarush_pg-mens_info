@@ -4,6 +4,7 @@ import { QRCodeSVG } from '../common/QRCodeSVG';
 import { usePG } from '../../context/PGContext';
 import { getRemoteSubmissionsFromSupabase, RemoteSubmissionRecord } from '../../lib/supabaseStorage';
 import { downloadAadhaarFile } from '../../utils/downloadUtils';
+import { getRoomSecurityToken } from '../../utils/securityUtils';
 
 interface QRScannerCollectorViewProps {
   initialRoomNumber?: string;
@@ -65,7 +66,8 @@ export const QRScannerCollectorView: React.FC<QRScannerCollectorViewProps> = ({
 
   const baseOrigin = getPublicBaseUrl().replace(/\/$/, '');
   const roomNumber = currentRoom ? currentRoom.roomNumber : '101';
-  const submissionUrl = `${baseOrigin}/?collectRoom=${encodeURIComponent(roomNumber)}`;
+  const roomSecurityToken = getRoomSecurityToken(roomNumber);
+  const submissionUrl = `${baseOrigin}/?collectRoomToken=${encodeURIComponent(roomSecurityToken)}`;
 
   const whatsappMessage = encodeURIComponent(
     `🏢 *Aarush Mens Luxury PG - Document Submission*\n\n` +
