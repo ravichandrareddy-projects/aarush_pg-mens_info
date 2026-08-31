@@ -13,12 +13,14 @@ import {
   PlusCircle,
   Clock,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  Download
 } from 'lucide-react';
 import { usePG } from '../../context/PGContext';
 import { Resident } from '../../types/pg';
 import { formatDayAndYear } from '../../utils/dateUtils';
 import { recordSubmissionInSupabase } from '../../lib/supabaseStorage';
+import { downloadAadhaarFile } from '../../utils/downloadUtils';
 
 interface ResidentProfileModalProps {
   residentId: string | null;
@@ -391,14 +393,22 @@ export const ResidentProfileModal: React.FC<ResidentProfileModalProps> = ({
                     <div className="flex items-center justify-between text-xs">
                       <span className="text-[#747878] font-mono">Uploaded Document File:</span>
                       <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => downloadAadhaarFile(resident.aadhaarDocumentUrl, `Aadhaar_Room${resident.roomNumber}_${resident.fullName.replace(/\s+/g, '_')}`)}
+                          className="py-2 px-3.5 rounded-xl bg-emerald-700 text-white font-semibold text-xs hover:bg-emerald-800 transition-all flex items-center gap-1.5 shadow-xs"
+                        >
+                          <Download className="w-4 h-4 text-emerald-200" />
+                          <span>Download Aadhaar Card 📥</span>
+                        </button>
                         <a
                           href={resident.aadhaarDocumentUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="py-2 px-3.5 rounded-xl bg-[#181919] text-white font-semibold text-xs hover:bg-black transition-all flex items-center gap-1.5 shadow-xs"
+                          className="py-2 px-3 rounded-xl border border-[#181919] bg-white text-[#181919] font-semibold text-xs hover:bg-[#F5F3F3] transition-all flex items-center gap-1"
                         >
-                          <FileText className="w-4 h-4 text-[#A8C393]" />
-                          <span>Open & Download Aadhaar ↗</span>
+                          <FileText className="w-3.5 h-3.5" />
+                          <span>View ↗</span>
                         </a>
                       </div>
                     </div>

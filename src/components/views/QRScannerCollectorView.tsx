@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { QrCode, Search, Share2, Copy, Check, ShieldCheck, Clock, FileText, User, ExternalLink, Building2, RefreshCw } from 'lucide-react';
+import { QrCode, Search, Share2, Copy, Check, ShieldCheck, Clock, FileText, User, ExternalLink, Building2, RefreshCw, Download } from 'lucide-react';
 import { QRCodeSVG } from '../common/QRCodeSVG';
 import { usePG } from '../../context/PGContext';
 import { getRemoteSubmissionsFromSupabase, RemoteSubmissionRecord } from '../../lib/supabaseStorage';
+import { downloadAadhaarFile } from '../../utils/downloadUtils';
 
 interface QRScannerCollectorViewProps {
   initialRoomNumber?: string;
@@ -273,15 +274,25 @@ export const QRScannerCollectorView: React.FC<QRScannerCollectorViewProps> = ({
                           <div className="p-2.5 rounded-lg bg-white border border-[#F5F2ED] flex items-center justify-between">
                             <span className="text-[#747878]">Aadhaar Document:</span>
                             {hasAadhaarDoc ? (
-                              <a
-                                href={aadhaarDocUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-emerald-700 hover:underline font-bold flex items-center gap-1"
-                              >
-                                <FileText className="w-3.5 h-3.5" />
-                                <span>View Document ↗</span>
-                              </a>
+                              <div className="flex items-center gap-2">
+                                <button
+                                  type="button"
+                                  onClick={() => downloadAadhaarFile(aadhaarDocUrl, `Aadhaar_${currentRoom?.roomNumber || 'Room'}_${resName.replace(/\s+/g, '_')}`)}
+                                  className="text-emerald-700 hover:text-emerald-900 font-bold flex items-center gap-1 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200"
+                                >
+                                  <Download className="w-3 h-3 text-emerald-600" />
+                                  <span>Download 📥</span>
+                                </button>
+                                <a
+                                  href={aadhaarDocUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-[#747878] hover:underline flex items-center gap-0.5"
+                                >
+                                  <FileText className="w-3 h-3" />
+                                  <span>View ↗</span>
+                                </a>
+                              </div>
                             ) : (
                               <span className="text-amber-700">Not Uploaded</span>
                             )}
