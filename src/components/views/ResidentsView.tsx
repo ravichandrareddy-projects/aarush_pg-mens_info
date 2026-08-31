@@ -11,7 +11,9 @@ import {
   XCircle,
   MoreVertical,
   ArrowUpDown,
-  UserCheck
+  UserCheck,
+  ShieldCheck,
+  Clock
 } from 'lucide-react';
 import { usePG } from '../../context/PGContext';
 import { Resident } from '../../types/pg';
@@ -198,6 +200,21 @@ export const ResidentsView: React.FC<ResidentsViewProps> = ({ onOpenAddResident,
                   <div className="flex items-center justify-between">
                     <span className="text-[#747878]">Joining Date:</span>
                     <span className="text-[#181919] font-medium">{formatDayAndYear(res.joiningDate)}</span>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-1 border-t border-[#F5F2ED]">
+                    <span className="text-[#747878]">Aadhaar Status:</span>
+                    {res.aadhaarDocumentUrl ? (
+                      <span className="text-emerald-700 font-bold flex items-center gap-1">
+                        <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                        <span>Uploaded ✓</span>
+                      </span>
+                    ) : (
+                      <span className="text-amber-800 font-medium flex items-center gap-1">
+                        <Clock className="w-3.5 h-3.5 text-amber-600" />
+                        <span>Pending ⏳</span>
+                      </span>
+                    )}
                   </div>
 
                   <div className="flex items-center justify-between">

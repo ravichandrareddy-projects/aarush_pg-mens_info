@@ -9,7 +9,9 @@ import {
   UserPlus,
   Receipt,
   Activity,
-  ArrowUpRight
+  ArrowUpRight,
+  ShieldCheck,
+  QrCode
 } from 'lucide-react';
 import { usePG } from '../../context/PGContext';
 import { NavTab } from '../layout/Sidebar';
@@ -21,7 +23,7 @@ interface DashboardViewProps {
 }
 
 export const DashboardView: React.FC<DashboardViewProps> = ({ onOpenAddResident, setActiveTab }) => {
-  const { stats, activities, theme } = usePG();
+  const { stats, residents, activities, theme } = usePG();
 
   return (
     <div className="space-y-8 max-w-7xl mx-auto pb-12">
@@ -189,6 +191,40 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onOpenAddResident,
               <p className="text-xs text-[#747878]">Currently managing {stats.occupiedBeds} active resident(s).</p>
             </div>
           )}
+        </div>
+
+        {/* Aadhaar Document Collector Card */}
+        <div className={`p-6 rounded-xl border ${theme === 'atelier' ? 'bg-white border-[#F5F2ED]' : 'bg-white border-[#E4E2E2]'}`}>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-base font-semibold text-[#181919] flex items-center gap-2">
+              <ShieldCheck className="w-5 h-5 text-emerald-600" />
+              <span>Aadhaar Collector</span>
+            </h3>
+            <button
+              onClick={() => setActiveTab('qr-scanner')}
+              className="text-xs font-mono text-[#536347] hover:underline flex items-center gap-1 font-bold"
+            >
+              <span>Open Scanner</span>
+              <ArrowUpRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+
+          <div className="p-4 rounded-xl bg-[#FDFBF7] border border-[#F5F2ED] space-y-3">
+            <div className="flex items-center justify-between font-mono text-xs">
+              <span className="text-[#747878]">Collected Aadhaar Cards:</span>
+              <span className="font-bold text-emerald-700">
+                {residents.filter((r) => r.aadhaarDocumentUrl).length} / {residents.filter((r) => r.status === 'ACTIVE').length} Uploaded ✓
+              </span>
+            </div>
+
+            <button
+              onClick={() => setActiveTab('qr-scanner')}
+              className="w-full py-2.5 rounded-xl bg-[#181919] text-white text-xs font-mono font-bold hover:bg-black transition-all flex items-center justify-center gap-2 shadow-xs"
+            >
+              <QrCode className="w-4 h-4 text-[#A8C393]" />
+              <span>Type Room Number or Scan QR</span>
+            </button>
+          </div>
         </div>
 
         {/* Payments Status Card */}
