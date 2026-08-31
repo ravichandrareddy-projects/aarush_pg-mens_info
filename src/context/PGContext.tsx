@@ -130,7 +130,32 @@ export const PGProvider: React.FC<{ children: React.ReactNode }> = ({ children }
     localStorage.setItem(STORAGE_KEY_THEME, newTheme);
   };
 
-  // Sync remote QR document submissions from Supabase Storage manifest
+  // Save residents, payments, and activities to localStorage whenever they update
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY_RESIDENTS, JSON.stringify(residents));
+    } catch (e) {
+      console.warn('Notice saving residents to localStorage:', e);
+    }
+  }, [residents]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY_PAYMENTS, JSON.stringify(payments));
+    } catch (e) {
+      console.warn('Notice saving payments to localStorage:', e);
+    }
+  }, [payments]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY_ACTIVITIES, JSON.stringify(activities));
+    } catch (e) {
+      console.warn('Notice saving activities to localStorage:', e);
+    }
+  }, [activities]);
+
+  // Pull Master State & Submissions from Supabase Storage for 100% Real-time Sync
   useEffect(() => {
     const syncSubmissions = async () => {
       try {
@@ -143,7 +168,6 @@ export const PGProvider: React.FC<{ children: React.ReactNode }> = ({ children }
             for (const sub of remoteSubs) {
               if (!sub.roomNumber || !sub.residentName) continue;
 
-              // Strict resident matching by residentId OR exact name + roomNumber
               const existingIdx = nextResidents.findIndex(
                 (res) =>
                   (sub.residentId && res.id === sub.residentId) ||
@@ -168,7 +192,6 @@ export const PGProvider: React.FC<{ children: React.ReactNode }> = ({ children }
                   };
                 }
               } else {
-                // Auto-create distinct resident object for new occupant submission
                 updated = true;
                 const newResId = sub.residentId || `res_${sub.roomNumber}_${Date.now()}_${Math.random().toString(36).substring(2, 5)}`;
                 const bedId = sub.bedId || `${sub.roomNumber}-B1`;
@@ -213,7 +236,6 @@ export const PGProvider: React.FC<{ children: React.ReactNode }> = ({ children }
       }
     };
 
-    // Pull Master State & Submissions from Supabase Storage for 100% Real-time Sync
     const syncMasterState = async () => {
       try {
         const [remoteMaster, remoteSubs] = await Promise.all([
@@ -221,11 +243,10 @@ export const PGProvider: React.FC<{ children: React.ReactNode }> = ({ children }
           getRemoteSubmissionsFromSupabase()
         ]);
 
-        if (remoteMaster && remoteMaster.residents && Array.isArray(remoteMaster.residents)) {
+        if (remoteMaster && remoteMaster.residents && Array.isArray(remoteMaster.residents) && remoteMaster.residents.length > 0) {
           setResidents((prev) => {
             const baseList = [...remoteMaster.residents];
 
-            // Merge remoteSubmissions document URLs into baseList residents
             if (remoteSubs && Array.isArray(remoteSubs)) {
               remoteSubs.forEach((sub) => {
                 if (!sub.roomNumber || !sub.residentName) return;
@@ -245,22 +266,10 @@ export const PGProvider: React.FC<{ children: React.ReactNode }> = ({ children }
               });
             }
 
-            // Merge remote residents with any local residents not in remote
-            const remoteMap = new Map<string, Resident>();
-            baseList.forEach((r: Resident) => remoteMap.set(r.id, r));
-
-            prev.forEach((localRes) => {
-              if (!remoteMap.has(localRes.id)) {
-                const isDuplicateNameRoom = baseList.some(
-                  (rr: Resident) => rr.fullName.trim().toLowerCase() === localRes.fullName.trim().toLowerCase() && rr.roomNumber === localRes.roomNumber
-                );
-                if (!isDuplicateNameRoom) {
-                  baseList.unshift(localRes);
-                }
-              }
-            });
-
             if (JSON.stringify(prev) !== JSON.stringify(baseList)) {
+              try {
+                localStorage.setItem(STORAGE_KEY_RESIDENTS, JSON.stringify(baseList));
+              } catch {}
               return baseList;
             }
             return prev;
@@ -271,12 +280,13 @@ export const PGProvider: React.FC<{ children: React.ReactNode }> = ({ children }
       }
     };
 
+    // Run immediately on mount and every 3 seconds
     syncSubmissions();
     syncMasterState();
     const interval = setInterval(() => {
       syncSubmissions();
       syncMasterState();
-    }, 5000);
+    }, 3000);
     return () => clearInterval(interval);
   }, []);
 
