@@ -21,6 +21,12 @@ export const ResidentSubmissionView: React.FC<ResidentSubmissionViewProps> = ({
     getRemoteSubmissionsFromSupabase().then((subs) => {
       if (subs && Array.isArray(subs)) {
         setRemoteSubmissions(subs);
+        const roomHasSub = subs.some((s) => s.roomNumber === roomNumber && Boolean(s.aadhaarDocumentUrl || s.photoUrl));
+        if (!roomHasSub) {
+          try {
+            localStorage.removeItem(`aarush_submitted_room_${roomNumber}`);
+          } catch {}
+        }
       }
     });
   }, [roomNumber]);
