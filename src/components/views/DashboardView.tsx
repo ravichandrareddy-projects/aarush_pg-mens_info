@@ -254,7 +254,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onOpenAddResident,
           ) : (
             <div className="space-y-2">
               <p className="text-xs text-amber-800">
-                {stats.pendingResidents} resident(s) have pending payments totaling ₹{stats.totalPendingAmount.toLocaleString()}.
+                {stats.pendingResidents} resident(s) have pending payments totaling ₹{(stats.totalPendingAmount || 0).toLocaleString()}.
               </p>
             </div>
           )}

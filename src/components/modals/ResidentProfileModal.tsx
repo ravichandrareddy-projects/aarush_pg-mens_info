@@ -249,7 +249,7 @@ export const ResidentProfileModal: React.FC<ResidentProfileModalProps> = ({
                   </div>
                   <div>
                     <span className="text-[#747878] block">Monthly Rent</span>
-                    <span className="font-bold text-sm text-[#181919]">₹{resident.monthlyRent.toLocaleString()}</span>
+                    <span className="font-bold text-sm text-[#181919]">₹{(resident.monthlyRent || 8000).toLocaleString()}</span>
                   </div>
                   <div>
                     <span className="text-[#747878] block">Rent Due Date</span>
@@ -356,7 +356,7 @@ export const ResidentProfileModal: React.FC<ResidentProfileModalProps> = ({
                       {residentPayments.map((p) => (
                         <tr key={p.id}>
                           <td className="p-3 text-[#747878]">{p.paymentDate}</td>
-                          <td className="p-3 text-emerald-700 font-bold">₹{p.amountPaid.toLocaleString()}</td>
+                          <td className="p-3 text-emerald-700 font-bold">₹{(p.amountPaid || 0).toLocaleString()}</td>
                           <td className="p-3">{p.paymentMethod}</td>
                           <td className="p-3 text-[#747878] font-sans">{p.notes || '—'}</td>
                         </tr>

@@ -228,7 +228,7 @@ export const ResidentsView: React.FC<ResidentsViewProps> = ({ onOpenAddResident,
                   <div className="flex items-center justify-between">
                     <span className="text-[#747878]">Monthly Rent:</span>
                     <span className="font-semibold text-[#181919]">
-                      ₹{res.monthlyRent.toLocaleString()}/mo
+                      ₹{(res.monthlyRent || 8000).toLocaleString()}/mo
                     </span>
                   </div>
 
@@ -262,7 +262,7 @@ export const ResidentsView: React.FC<ResidentsViewProps> = ({ onOpenAddResident,
                   ) : (
                     <>
                       <XCircle className="w-3.5 h-3.5 text-white" />
-                      <span>Confirm Paid (₹{res.monthlyRent.toLocaleString()})</span>
+                      <span>Confirm Paid (₹{(res.monthlyRent || 8000).toLocaleString()})</span>
                     </>
                   )}
                 </button>

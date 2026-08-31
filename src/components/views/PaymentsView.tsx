@@ -154,13 +154,13 @@ export const PaymentsView: React.FC<PaymentsViewProps> = ({ onOpenRecordPayment,
                           Room {res.roomNumber} (Bed {res.bedNumber})
                         </td>
                         <td className="px-4 py-3.5 font-mono text-[#181919]">
-                          ₹{res.monthlyRent.toLocaleString()}
+                          ₹{(res.monthlyRent || 8000).toLocaleString()}
                         </td>
                         <td className="px-4 py-3.5 font-mono text-emerald-700 font-medium">
-                          ₹{res.amountPaid.toLocaleString()}
+                          ₹{(res.amountPaid || 0).toLocaleString()}
                         </td>
                         <td className="px-4 py-3.5 font-mono text-amber-800 font-medium">
-                          ₹{res.amountPending.toLocaleString()}
+                          ₹{(res.amountPending || 0).toLocaleString()}
                         </td>
                         <td className="px-4 py-3.5 font-mono">
                           <span
@@ -217,7 +217,7 @@ export const PaymentsView: React.FC<PaymentsViewProps> = ({ onOpenRecordPayment,
                           </td>
                           <td className="px-4 py-3 text-[#181919]">Room {pay.roomNumber}</td>
                           <td className="px-4 py-3 text-emerald-700 font-bold">
-                            ₹{pay.amountPaid.toLocaleString()}
+                            ₹{(pay.amountPaid || 0).toLocaleString()}
                           </td>
                           <td className="px-4 py-3">
                             <span className="bg-[#F5F3F3] text-[#181919] px-2 py-0.5 rounded text-[10px]">

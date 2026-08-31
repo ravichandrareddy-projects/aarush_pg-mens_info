@@ -41,7 +41,7 @@ export const MarkLeftModal: React.FC<MarkLeftModalProps> = ({ residentId, onClos
             <p className="text-[#747878]">Room {resident.roomNumber} (Bed {resident.bedNumber})</p>
             {resident.amountPending > 0 && (
               <p className="text-red-700 font-semibold pt-1">
-                ⚠️ Warning: Pending Balance ₹{resident.amountPending.toLocaleString()}
+                ⚠️ Warning: Pending Balance ₹{(resident.amountPending || 0).toLocaleString()}
               </p>
             )}
           </div>
