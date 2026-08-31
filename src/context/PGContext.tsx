@@ -33,6 +33,7 @@ interface PGContextType {
   
   // Actions
   addResident: (residentData: Omit<Resident, 'id' | 'createdAt' | 'status'>) => void;
+  updateResident: (residentId: string, updates: Partial<Resident>) => void;
   moveResident: (residentId: string, newFloorId: string, newRoomId: string, newBedId: string) => boolean;
   markResidentLeft: (residentId: string, leavingDate: string, reason?: string) => boolean;
   recordPayment: (payment: {
@@ -339,6 +340,17 @@ export const PGProvider: React.FC<{ children: React.ReactNode }> = ({ children }
       roomNumber: residentData.roomNumber
     };
     setActivities((prev) => [log, ...prev]);
+  };
+
+  const updateResident = (residentId: string, updates: Partial<Resident>) => {
+    setResidents((prev) =>
+      prev.map((r) => {
+        if (r.id === residentId) {
+          return { ...r, ...updates };
+        }
+        return r;
+      })
+    );
   };
 
   const moveResident = (residentId: string, newFloorId: string, newRoomId: string, newBedId: string): boolean => {
@@ -701,6 +713,7 @@ export const PGProvider: React.FC<{ children: React.ReactNode }> = ({ children }
         setTheme,
         stats,
         addResident,
+        updateResident,
         moveResident,
         markResidentLeft,
         recordPayment,

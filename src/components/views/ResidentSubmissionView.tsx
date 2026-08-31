@@ -12,7 +12,7 @@ export const ResidentSubmissionView: React.FC<ResidentSubmissionViewProps> = ({
   roomNumber,
   onFinished
 }) => {
-  const { floors, residents, getResidentById } = usePG();
+  const { floors, residents, getResidentById, updateResident } = usePG();
 
   // Flexible Room Lookup
   let targetRoom: any = null;
@@ -145,12 +145,11 @@ export const ResidentSubmissionView: React.FC<ResidentSubmissionViewProps> = ({
 
       // Update local resident object if matching resident exists
       if (selectedResidentId) {
-        const targetRes = residents.find((r) => r.id === selectedResidentId);
-        if (targetRes) {
-          targetRes.aadhaarNumber = aadhaarNumber;
-          if (finalAadhaarUrl) targetRes.aadhaarDocumentUrl = finalAadhaarUrl;
-          if (finalPhotoUrl) targetRes.photoUrl = finalPhotoUrl;
-        }
+        updateResident(selectedResidentId, {
+          aadhaarNumber,
+          ...(finalAadhaarUrl ? { aadhaarDocumentUrl: finalAadhaarUrl } : {}),
+          ...(finalPhotoUrl ? { photoUrl: finalPhotoUrl } : {})
+        });
       }
 
       // Save persistent submission status locally for refresh retention

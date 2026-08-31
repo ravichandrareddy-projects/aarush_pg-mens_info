@@ -245,8 +245,12 @@ export async function recordSubmissionInSupabase(record: Omit<RemoteSubmissionRe
       }
     }
 
+    const prev = previousRecords[0];
+
     const newRecord: RemoteSubmissionRecord = {
       ...record,
+      aadhaarDocumentUrl: record.aadhaarDocumentUrl || prev?.aadhaarDocumentUrl,
+      photoUrl: record.photoUrl || prev?.photoUrl,
       id: `sub_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
       submittedAt: new Date().toISOString()
     };

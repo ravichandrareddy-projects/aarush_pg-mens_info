@@ -18,6 +18,7 @@ import {
 import { usePG } from '../../context/PGContext';
 import { Resident } from '../../types/pg';
 import { formatDayAndYear } from '../../utils/dateUtils';
+import { recordSubmissionInSupabase } from '../../lib/supabaseStorage';
 
 interface ResidentProfileModalProps {
   residentId: string | null;
@@ -34,13 +35,32 @@ export const ResidentProfileModal: React.FC<ResidentProfileModalProps> = ({
   onOpenMarkLeftModal,
   onOpenRecordPayment
 }) => {
-  const { getResidentById, payments, activities } = usePG();
+  const { getResidentById, updateResident, payments, activities } = usePG();
   const [activeTab, setActiveTab] = useState<'INFO' | 'PAYMENTS' | 'DOCS' | 'HISTORY'>('INFO');
   const [showFullAadhaar, setShowFullAadhaar] = useState(false);
 
   if (!residentId) return null;
   const resident = getResidentById(residentId);
   if (!resident) return null;
+
+  const [isEditingAadhaar, setIsEditingAadhaar] = useState(false);
+  const [editedAadhaar, setEditedAadhaar] = useState(resident.aadhaarNumber || '');
+
+  const handleSaveAadhaar = async () => {
+    if (!editedAadhaar) return;
+    updateResident(resident.id, { aadhaarNumber: editedAadhaar });
+    await recordSubmissionInSupabase({
+      roomNumber: resident.roomNumber,
+      bedId: resident.bedId,
+      residentId: resident.id,
+      residentName: resident.fullName,
+      phone: resident.phone,
+      aadhaarNumber: editedAadhaar,
+      aadhaarDocumentUrl: resident.aadhaarDocumentUrl,
+      photoUrl: resident.photoUrl
+    });
+    setIsEditingAadhaar(false);
+  };
 
   // Mask Aadhaar e.g. "9876 5432 1012" -> "XXXX-XXXX-1012"
   const maskAadhaar = (num?: string) => {
@@ -309,20 +329,60 @@ export const ResidentProfileModal: React.FC<ResidentProfileModalProps> = ({
                 </div>
 
                 <div className="flex items-center justify-between font-mono bg-[#FDFBF7] p-3 rounded-xl border border-[#F5F2ED]">
-                  <div>
+                  <div className="flex-1 mr-2">
                     <span className="text-[10px] text-[#747878] block uppercase">Aadhaar Number</span>
-                    <span className="font-bold text-sm text-[#181919]">
-                      {showFullAadhaar ? resident.aadhaarNumber || 'Not provided' : maskAadhaar(resident.aadhaarNumber)}
-                    </span>
+                    {isEditingAadhaar ? (
+                      <div className="flex items-center gap-2 mt-1">
+                        <input
+                          type="text"
+                          value={editedAadhaar}
+                          onChange={(e) => setEditedAadhaar(e.target.value)}
+                          placeholder="Enter 12-digit Aadhaar"
+                          className="px-2 py-1 border border-[#181919] rounded-lg text-xs font-mono w-44 focus:outline-none"
+                        />
+                        <button
+                          type="button"
+                          onClick={handleSaveAadhaar}
+                          className="px-2.5 py-1 bg-[#181919] text-white text-xs font-semibold rounded-lg hover:bg-[#536347]"
+                        >
+                          Save
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setIsEditingAadhaar(false)}
+                          className="px-2 py-1 text-xs text-[#747878] hover:underline"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    ) : (
+                      <span className="font-bold text-sm text-[#181919]">
+                        {showFullAadhaar ? resident.aadhaarNumber || 'Not provided' : maskAadhaar(resident.aadhaarNumber)}
+                      </span>
+                    )}
                   </div>
 
-                  <button
-                    type="button"
-                    onClick={() => setShowFullAadhaar(!showFullAadhaar)}
-                    className="text-[11px] text-[#536347] font-semibold hover:underline"
-                  >
-                    {showFullAadhaar ? 'Hide' : 'Show Full Number'}
-                  </button>
+                  {!isEditingAadhaar && (
+                    <div className="flex items-center gap-3">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setEditedAadhaar(resident.aadhaarNumber || '');
+                          setIsEditingAadhaar(true);
+                        }}
+                        className="text-[11px] text-[#181919] font-semibold hover:underline flex items-center gap-1"
+                      >
+                        ✏️ Edit
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setShowFullAadhaar(!showFullAadhaar)}
+                        className="text-[11px] text-[#536347] font-semibold hover:underline"
+                      >
+                        {showFullAadhaar ? 'Hide' : 'Show Full Number'}
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 {/* Aadhaar File Preview & Open/Download Actions */}
