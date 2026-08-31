@@ -33,6 +33,7 @@ interface PGContextType {
   // Actions
   addResident: (residentData: Omit<Resident, 'id' | 'createdAt' | 'status'>) => void;
   updateResident: (residentId: string, updates: Partial<Resident>) => void;
+  deleteResident: (residentId: string) => boolean;
   moveResident: (residentId: string, newFloorId: string, newRoomId: string, newBedId: string) => boolean;
   markResidentLeft: (residentId: string, leavingDate: string, reason?: string) => boolean;
   recordPayment: (payment: {
@@ -157,136 +158,79 @@ export const PGProvider: React.FC<{ children: React.ReactNode }> = ({ children }
 
   // Pull Master State & Submissions from Supabase Storage for 100% Real-time Sync
   useEffect(() => {
-    const syncSubmissions = async () => {
-      try {
-        const remoteSubs = await getRemoteSubmissionsFromSupabase();
-        if (remoteSubs && Array.isArray(remoteSubs) && remoteSubs.length > 0) {
-          setResidents((prevResidents) => {
-            let updated = false;
-            let nextResidents = [...prevResidents];
-
-            for (const sub of remoteSubs) {
-              if (!sub.roomNumber || !sub.residentName) continue;
-
-              const existingIdx = nextResidents.findIndex(
-                (res) =>
-                  (sub.residentId && res.id === sub.residentId) ||
-                  (sub.roomNumber === res.roomNumber && sub.residentName.trim().toLowerCase() === res.fullName.trim().toLowerCase())
-              );
-
-              if (existingIdx !== -1) {
-                const res = nextResidents[existingIdx];
-                if (
-                  res.aadhaarDocumentUrl !== sub.aadhaarDocumentUrl ||
-                  res.photoUrl !== sub.photoUrl ||
-                  (sub.aadhaarNumber && res.aadhaarNumber !== sub.aadhaarNumber)
-                ) {
-                  updated = true;
-                  nextResidents[existingIdx] = {
-                    ...res,
-                    fullName: sub.residentName || res.fullName,
-                    phone: sub.phone || res.phone,
-                    aadhaarNumber: sub.aadhaarNumber || res.aadhaarNumber,
-                    aadhaarDocumentUrl: sub.aadhaarDocumentUrl || res.aadhaarDocumentUrl,
-                    photoUrl: sub.photoUrl || res.photoUrl
-                  };
-                }
-              } else {
-                updated = true;
-                const newResId = sub.residentId || `res_${sub.roomNumber}_${Date.now()}_${Math.random().toString(36).substring(2, 5)}`;
-                const bedId = sub.bedId || `${sub.roomNumber}-B1`;
-                const bedNumMatch = bedId.match(/B(\d+)/i);
-                const bedNumber = bedNumMatch ? parseInt(bedNumMatch[1], 10) : 1;
-
-                const newResObj = {
-                  id: newResId,
-                  fullName: sub.residentName,
-                  phone: sub.phone || '9999999999',
-                  aadhaarNumber: sub.aadhaarNumber || '',
-                  address: `Aarush Mens PG, Room ${sub.roomNumber}`,
-                  floorId: `floor_${sub.roomNumber.charAt(0)}`,
-                  roomId: sub.roomNumber,
-                  roomNumber: sub.roomNumber,
-                  bedId: bedId,
-                  bedNumber: bedNumber,
-                  monthlyRent: 8000,
-                  rentDueDay: 1,
-                  amountPaid: 0,
-                  amountPending: 8000,
-                  paymentStatus: 'UNPAID' as const,
-                  joiningDate: new Date().toISOString().split('T')[0],
-                  status: 'ACTIVE' as const,
-                  emergencyName: 'Guardian',
-                  emergencyPhone: sub.phone || '9999999999',
-                  emergencyRelationship: 'Parent',
-                  createdAt: sub.submittedAt || new Date().toISOString(),
-                  aadhaarDocumentUrl: sub.aadhaarDocumentUrl,
-                  photoUrl: sub.photoUrl
-                };
-
-                nextResidents.push(newResObj);
-              }
-            }
-
-            return updated ? nextResidents : prevResidents;
-          });
-        }
-      } catch (err) {
-        console.warn('Notice syncing remote submissions in context:', err);
-      }
-    };
-
-    const syncMasterState = async () => {
+    const syncAllRemoteData = async () => {
       try {
         const [remoteMaster, remoteSubs] = await Promise.all([
           getMasterStateFromSupabase(),
           getRemoteSubmissionsFromSupabase()
         ]);
 
-        if (remoteMaster && remoteMaster.residents && Array.isArray(remoteMaster.residents) && remoteMaster.residents.length > 0) {
-          setResidents((prev) => {
-            const baseList = [...remoteMaster.residents];
+        // If nothing from Supabase, skip
+        const hasRemoteMaster = remoteMaster && Array.isArray(remoteMaster.residents) && remoteMaster.residents.length > 0;
+        const hasRemoteSubs = remoteSubs && Array.isArray(remoteSubs) && remoteSubs.length > 0;
+        if (!hasRemoteMaster && !hasRemoteSubs) return;
 
-            if (remoteSubs && Array.isArray(remoteSubs)) {
-              remoteSubs.forEach((sub) => {
-                if (!sub.roomNumber || !sub.residentName) return;
-                const idx = baseList.findIndex(
-                  (r) =>
-                    (sub.residentId && r.id === sub.residentId) ||
-                    (r.roomNumber === sub.roomNumber && r.fullName.trim().toLowerCase() === sub.residentName.trim().toLowerCase())
-                );
-                if (idx !== -1) {
-                  baseList[idx] = {
-                    ...baseList[idx],
-                    photoUrl: sub.photoUrl || baseList[idx].photoUrl,
-                    aadhaarDocumentUrl: sub.aadhaarDocumentUrl || baseList[idx].aadhaarDocumentUrl,
-                    aadhaarNumber: sub.aadhaarNumber || baseList[idx].aadhaarNumber
-                  };
-                }
-              });
-            }
+        // Build the merged resident list outside setState (pure computation)
+        const buildMergedList = (prevResidents: typeof residents) => {
+          // Start from master_state.json (authoritative), fallback to local
+          const baseList: typeof residents = hasRemoteMaster
+            ? remoteMaster.residents.map((r: any) => ({
+                ...r,
+                id: r.id || `res_${r.roomNumber}_${r.bedId}`,
+                status: r.status || 'ACTIVE',
+                paymentStatus: r.paymentStatus || 'UNPAID',
+              }))
+            : [...prevResidents];
 
-            if (JSON.stringify(prev) !== JSON.stringify(baseList)) {
-              try {
-                localStorage.setItem(STORAGE_KEY_RESIDENTS, JSON.stringify(baseList));
-              } catch {}
-              return baseList;
+          if (hasRemoteSubs) {
+            for (const sub of remoteSubs) {
+              if (!sub.roomNumber || !sub.residentName) continue;
+
+              // Match by residentId first (most reliable), then bedId+room, then name+room
+              const existingIdx = baseList.findIndex(
+                (r: any) =>
+                  (sub.residentId && r.id === sub.residentId) ||
+                  (sub.bedId && r.bedId && r.bedId === sub.bedId && r.roomNumber === sub.roomNumber) ||
+                  (r.roomNumber === sub.roomNumber && r.fullName.trim().toLowerCase() === sub.residentName.trim().toLowerCase())
+              );
+
+              if (existingIdx !== -1) {
+                // Merge docs into existing resident
+                const r = baseList[existingIdx] as any;
+                baseList[existingIdx] = {
+                  ...r,
+                  photoUrl: sub.photoUrl || r.photoUrl,
+                  aadhaarDocumentUrl: sub.aadhaarDocumentUrl || r.aadhaarDocumentUrl,
+                  aadhaarNumber: sub.aadhaarNumber || r.aadhaarNumber,
+                  phone: sub.phone || r.phone,
+                };
+              }
+              // Note: don't create new residents from submissions — only update existing ones
+              // New residents should only be added by admin through AddResidentModal
             }
-            return prev;
-          });
-        }
+          }
+
+          return baseList;
+        };
+
+        // Compute outside setState to avoid closure issues
+        setResidents((prev) => {
+          const merged = buildMergedList(prev);
+          // Only update if something actually changed
+          if (JSON.stringify(prev) === JSON.stringify(merged)) return prev;
+          try {
+            localStorage.setItem(STORAGE_KEY_RESIDENTS, JSON.stringify(merged));
+          } catch {}
+          return merged;
+        });
       } catch (err) {
-        console.warn('Notice pulling master state:', err);
+        console.warn('Notice pulling remote data:', err);
       }
     };
 
-    // Run immediately on mount and every 3 seconds
-    syncSubmissions();
-    syncMasterState();
-    const interval = setInterval(() => {
-      syncSubmissions();
-      syncMasterState();
-    }, 3000);
+    // Run immediately on mount and every 5 seconds
+    syncAllRemoteData();
+    const interval = setInterval(syncAllRemoteData, 5000);
     return () => clearInterval(interval);
   }, []);
 
@@ -591,6 +535,29 @@ export const PGProvider: React.FC<{ children: React.ReactNode }> = ({ children }
     return true;
   };
 
+  const deleteResident = (residentId: string): boolean => {
+    const res = residents.find((r) => r.id === residentId);
+    if (!res) return false;
+
+    setResidents((prev) => {
+      const updated = prev.filter((r) => r.id !== residentId);
+      saveMasterStateToSupabase({ residents: updated });
+      return updated;
+    });
+
+    const log: ActivityLog = {
+      id: `LOG-${Date.now()}`,
+      timestamp: new Date().toISOString(),
+      type: 'RESIDENT_LEFT',
+      description: `Permanently deleted resident ${res.fullName} from Room ${res.roomNumber}`,
+      residentName: res.fullName,
+      roomNumber: res.roomNumber
+    };
+    setActivities((prev) => [log, ...prev]);
+
+    return true;
+  };
+
   const togglePaymentStatus = (residentId: string): boolean => {
     const res = residents.find((r) => r.id === residentId);
     if (!res) return false;
@@ -821,6 +788,7 @@ export const PGProvider: React.FC<{ children: React.ReactNode }> = ({ children }
         stats,
         addResident,
         updateResident,
+        deleteResident,
         moveResident,
         markResidentLeft,
         recordPayment,

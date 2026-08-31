@@ -77,7 +77,7 @@ export function isAdminSessionActive(): boolean {
  * e.g. "610" -> "qrm_610_k9x2m4_sec"
  * OLD DIRECT LINKS (?collectRoom=610) ARE 100% INVALIDATED AND REJECTED.
  */
-const ROOM_TOKEN_SALT = 'AARUSH_PG_SECURE_TOKEN_SALT_2026_V2_ENCRYPTED_NEW_LINKS';
+const ROOM_TOKEN_SALT = 'AARUSH_PG_SECURE_TOKEN_SALT_2026_V3_OPAQUE';
 
 function computeRoomHash(roomStr: string): string {
   let hash = 0;
@@ -93,25 +93,33 @@ export function getRoomSecurityToken(roomNumber: string): string {
   if (!roomNumber) return '';
   const clean = roomNumber.trim().toUpperCase();
   const hash = computeRoomHash(clean);
-  return `qrm_${clean.toLowerCase()}_${hash}_sec`;
+  const payload = `${clean}|${hash}`;
+  return `qrs_${btoa(payload).replace(/=/g, '')}`;
 }
 
 export function resolveRoomNumberFromToken(tokenOrRoom: string): string {
   if (!tokenOrRoom) return '';
   const clean = tokenOrRoom.trim();
 
-  // Pattern: qrm_[room]_[hash]_sec
-  const match = clean.match(/^qrm_([g]?\d{2,3})_([a-z0-9]+)_sec$/i);
-  if (match) {
-    const parsedRoom = match[1].toUpperCase();
-    const expectedHash = computeRoomHash(parsedRoom);
-    if (match[2].toLowerCase() === expectedHash.toLowerCase()) {
-      return parsedRoom;
+  // Pattern: qrs_[base64]
+  if (clean.startsWith('qrs_')) {
+    try {
+      const b64 = clean.substring(4);
+      const padded = b64 + '==='.slice((b64.length + 3) % 4);
+      const payload = atob(padded);
+      const parts = payload.split('|');
+      if (parts.length === 2) {
+        const parsedRoom = parts[0];
+        const expectedHash = computeRoomHash(parsedRoom);
+        if (parts[1].toLowerCase() === expectedHash.toLowerCase()) {
+          return parsedRoom;
+        }
+      }
+    } catch {
+      return '';
     }
-    // Invalid hash tamper attempt
-    return '';
   }
 
-  // ALL OLD DIRECT ROOM NUMBERS (e.g. ?collectRoom=610 or 101) ARE REJECTED
+  // ALL OLD DIRECT ROOM NUMBERS OR V2 TOKENS ARE REJECTED
   return '';
 }

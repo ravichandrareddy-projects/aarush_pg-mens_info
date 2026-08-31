@@ -40,7 +40,7 @@ export const ResidentProfileModal: React.FC<ResidentProfileModalProps> = ({
   onOpenMarkLeftModal,
   onOpenRecordPayment
 }) => {
-  const { getResidentById, updateResident, payments, activities } = usePG();
+  const { getResidentById, updateResident, deleteResident, payments, activities } = usePG();
   const [activeTab, setActiveTab] = useState<'INFO' | 'PAYMENTS' | 'DOCS' | 'HISTORY'>('INFO');
   const [showFullAadhaar, setShowFullAadhaar] = useState(false);
   const [isEditingName, setIsEditingName] = useState(false);
@@ -594,16 +594,37 @@ export const ResidentProfileModal: React.FC<ResidentProfileModalProps> = ({
         {/* Action Footer */}
         {resident.status === 'ACTIVE' && (
           <div className="p-4 border-t border-[#F5F2ED] bg-[#FDFBF7] flex items-center justify-between gap-3">
-            <button
-              onClick={() => {
-                onClose();
-                onOpenMarkLeftModal(resident.id);
-              }}
-              className="py-2 px-3 rounded-lg border border-red-200 text-red-700 text-xs font-medium hover:bg-red-50 transition-colors flex items-center gap-1.5"
-            >
-              <UserMinus className="w-4 h-4" />
-              <span>Mark as Left</span>
-            </button>
+            <div className="flex gap-2">
+              <button
+                onClick={() => {
+                  onClose();
+                  onOpenMarkLeftModal(resident.id);
+                }}
+                className="py-2 px-3 rounded-lg border border-red-200 text-red-700 text-xs font-medium hover:bg-red-50 transition-colors flex items-center gap-1.5"
+              >
+                <UserMinus className="w-4 h-4" />
+                <span>Mark as Left</span>
+              </button>
+              <button
+                onClick={async () => {
+                  if (confirm(`Are you absolutely sure you want to PERMANENTLY DELETE ${resident.fullName} from the database? This action cannot be undone.`)) {
+                    await eraseResidentDocumentsFromSupabase({
+                      roomNumber: resident.roomNumber,
+                      residentId: resident.id,
+                      residentName: resident.fullName,
+                      photoUrl: resident.photoUrl,
+                      aadhaarDocumentUrl: resident.aadhaarDocumentUrl
+                    });
+                    deleteResident(resident.id);
+                    onClose();
+                  }
+                }}
+                className="py-2 px-3 rounded-lg bg-red-600 text-white text-xs font-medium hover:bg-red-700 transition-colors flex items-center gap-1.5"
+              >
+                <Trash2 className="w-4 h-4" />
+                <span>Delete</span>
+              </button>
+            </div>
 
             <button
               onClick={() => {
