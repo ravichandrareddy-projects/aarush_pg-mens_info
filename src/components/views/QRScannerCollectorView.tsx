@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
-import { QrCode, Search, Share2, Copy, Check, ShieldCheck, Clock, FileText, User, ExternalLink, Building2 } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { QrCode, Search, Share2, Copy, Check, ShieldCheck, Clock, FileText, User, ExternalLink, Building2, RefreshCw } from 'lucide-react';
 import { QRCodeSVG } from '../common/QRCodeSVG';
 import { usePG } from '../../context/PGContext';
+import { getRemoteSubmissionsFromSupabase, RemoteSubmissionRecord } from '../../lib/supabaseStorage';
 
 interface QRScannerCollectorViewProps {
   initialRoomNumber?: string;
@@ -15,6 +16,21 @@ export const QRScannerCollectorView: React.FC<QRScannerCollectorViewProps> = ({
   const { floors, getResidentById } = usePG();
   const [searchQuery, setSearchQuery] = useState(initialRoomNumber);
   const [copied, setCopied] = useState(false);
+  const [remoteSubmissions, setRemoteSubmissions] = useState<RemoteSubmissionRecord[]>([]);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const fetchRemote = async () => {
+    setIsRefreshing(true);
+    const subs = await getRemoteSubmissionsFromSupabase();
+    setRemoteSubmissions(subs);
+    setIsRefreshing(false);
+  };
+
+  useEffect(() => {
+    fetchRemote();
+    const interval = setInterval(fetchRemote, 5000);
+    return () => clearInterval(interval);
+  }, []);
 
   // Flatten all rooms across all floors
   const allRooms = floors.flatMap((floor) =>
@@ -173,7 +189,18 @@ export const QRScannerCollectorView: React.FC<QRScannerCollectorViewProps> = ({
               <div className="space-y-3">
                 {currentRoom.beds.map((bed) => {
                   const resident = bed.residentId ? getResidentById(bed.residentId) : null;
-                  const hasAadhaarDoc = Boolean(resident?.aadhaarDocumentUrl);
+                  const remoteSub = remoteSubmissions.find(
+                    (s) =>
+                      s.roomNumber === currentRoom.roomNumber &&
+                      (s.bedId === bed.id || (resident && (s.residentId === resident.id || s.residentName.trim().toLowerCase() === resident.fullName.trim().toLowerCase())))
+                  );
+
+                  const aadhaarDocUrl = resident?.aadhaarDocumentUrl || remoteSub?.aadhaarDocumentUrl;
+                  const residentPhotoUrl = resident?.photoUrl || remoteSub?.photoUrl;
+                  const aadhaarNum = resident?.aadhaarNumber || remoteSub?.aadhaarNumber;
+                  const resName = resident ? resident.fullName : (remoteSub ? remoteSub.residentName : 'Bed Empty');
+                  const resPhone = resident ? resident.phone : (remoteSub ? remoteSub.phone : 'Unassigned Bed');
+                  const hasAadhaarDoc = Boolean(aadhaarDocUrl);
 
                   return (
                     <div
@@ -182,20 +209,24 @@ export const QRScannerCollectorView: React.FC<QRScannerCollectorViewProps> = ({
                     >
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                          <div className="w-9 h-9 rounded-xl bg-[#181919] text-white font-mono font-bold text-xs flex items-center justify-center">
-                            B{bed.bedNumber}
-                          </div>
+                          {residentPhotoUrl ? (
+                            <img src={residentPhotoUrl} alt={resName} className="w-9 h-9 rounded-xl object-cover border border-[#181919]" />
+                          ) : (
+                            <div className="w-9 h-9 rounded-xl bg-[#181919] text-white font-mono font-bold text-xs flex items-center justify-center">
+                              B{bed.bedNumber}
+                            </div>
+                          )}
                           <div>
                             <h4 className="font-bold text-sm text-[#181919]">
-                              {resident ? resident.fullName : 'Bed Empty'}
+                              {resName}
                             </h4>
                             <p className="text-xs text-[#747878] font-mono">
-                              {resident ? `Phone: ${resident.phone}` : 'Unassigned Bed'}
+                              Phone: {resPhone}
                             </p>
                           </div>
                         </div>
 
-                        {bed.status === 'OCCUPIED' ? (
+                        {bed.status === 'OCCUPIED' || remoteSub ? (
                           hasAadhaarDoc ? (
                             <span className="px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 text-[11px] font-mono font-bold flex items-center gap-1">
                               <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
@@ -213,12 +244,12 @@ export const QRScannerCollectorView: React.FC<QRScannerCollectorViewProps> = ({
                       </div>
 
                       {/* Resident Aadhaar & Photo Details Card */}
-                      {resident && (
+                      {(resident || remoteSub) && (
                         <div className="pt-3 border-t border-[#F5F2ED] grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs font-mono">
                           <div className="p-2.5 rounded-lg bg-white border border-[#F5F2ED] flex items-center justify-between">
                             <span className="text-[#747878]">Aadhaar No:</span>
                             <span className="font-bold text-[#181919]">
-                              {resident.aadhaarNumber || 'Not provided'}
+                              {aadhaarNum || 'Not provided'}
                             </span>
                           </div>
 
@@ -226,7 +257,7 @@ export const QRScannerCollectorView: React.FC<QRScannerCollectorViewProps> = ({
                             <span className="text-[#747878]">Aadhaar Document:</span>
                             {hasAadhaarDoc ? (
                               <a
-                                href={resident.aadhaarDocumentUrl}
+                                href={aadhaarDocUrl}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="text-emerald-700 hover:underline font-bold flex items-center gap-1"

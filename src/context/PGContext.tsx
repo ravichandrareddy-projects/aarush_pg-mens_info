@@ -18,6 +18,7 @@ import {
   INITIAL_6TH_FLOOR_RESIDENTS
 } from '../data/buildingConfig';
 import { syncResidentsToSupabase, syncPaymentsToSupabase } from '../lib/supabaseSync';
+import { getRemoteSubmissionsFromSupabase } from '../lib/supabaseStorage';
 
 export type DesignTheme = 'atelier' | 'vision';
 
@@ -113,6 +114,50 @@ export const PGProvider: React.FC<{ children: React.ReactNode }> = ({ children }
     setThemeState(newTheme);
     localStorage.setItem(STORAGE_KEY_THEME, newTheme);
   };
+
+  // Sync remote QR document submissions from Supabase Storage manifest
+  useEffect(() => {
+    const syncSubmissions = async () => {
+      try {
+        const remoteSubs = await getRemoteSubmissionsFromSupabase();
+        if (remoteSubs && remoteSubs.length > 0) {
+          setResidents((prevResidents) => {
+            let updated = false;
+            const nextResidents = prevResidents.map((res) => {
+              const sub = remoteSubs.find(
+                (s) =>
+                  (s.residentId && s.residentId === res.id) ||
+                  (s.roomNumber === res.roomNumber && s.residentName.trim().toLowerCase() === res.fullName.trim().toLowerCase())
+              );
+              if (sub) {
+                if (
+                  res.aadhaarDocumentUrl !== sub.aadhaarDocumentUrl ||
+                  res.photoUrl !== sub.photoUrl ||
+                  (sub.aadhaarNumber && res.aadhaarNumber !== sub.aadhaarNumber)
+                ) {
+                  updated = true;
+                  return {
+                    ...res,
+                    aadhaarNumber: sub.aadhaarNumber || res.aadhaarNumber,
+                    aadhaarDocumentUrl: sub.aadhaarDocumentUrl || res.aadhaarDocumentUrl,
+                    photoUrl: sub.photoUrl || res.photoUrl
+                  };
+                }
+              }
+              return res;
+            });
+            return updated ? nextResidents : prevResidents;
+          });
+        }
+      } catch (err) {
+        console.warn('Notice syncing remote submissions in context:', err);
+      }
+    };
+
+    syncSubmissions();
+    const interval = setInterval(syncSubmissions, 10000);
+    return () => clearInterval(interval);
+  }, []);
 
   // Permanent local storage persistence for residents, payments, activities
   useEffect(() => {

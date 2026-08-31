@@ -64,3 +64,55 @@ export async function deleteSupabaseFile(bucketName: 'resident-photos' | 'aadhaa
     console.error('Error deleting file from Supabase storage:', err);
   }
 }
+
+export interface RemoteSubmissionRecord {
+  id: string;
+  roomNumber: string;
+  bedId?: string;
+  residentId?: string;
+  residentName: string;
+  phone: string;
+  aadhaarNumber: string;
+  aadhaarDocumentUrl?: string;
+  photoUrl?: string;
+  submittedAt: string;
+}
+
+/**
+ * Fetch all resident document submissions saved in Supabase Storage manifest
+ */
+export async function getRemoteSubmissionsFromSupabase(): Promise<RemoteSubmissionRecord[]> {
+  if (!isSupabaseConfigured || !supabase) return [];
+  try {
+    const { data, error } = await supabase.storage.from('aadhaar-documents').download('manifest/submissions.json');
+    if (error || !data) return [];
+    const text = await data.text();
+    return JSON.parse(text) || [];
+  } catch (err) {
+    console.warn('Notice fetching remote submissions:', err);
+    return [];
+  }
+}
+
+/**
+ * Save new resident document submission to Supabase Storage manifest
+ */
+export async function recordSubmissionInSupabase(record: Omit<RemoteSubmissionRecord, 'id' | 'submittedAt'>) {
+  if (!isSupabaseConfigured || !supabase) return;
+  try {
+    const existing = await getRemoteSubmissionsFromSupabase();
+    const newRecord: RemoteSubmissionRecord = {
+      ...record,
+      id: `sub_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+      submittedAt: new Date().toISOString()
+    };
+    const updated = [newRecord, ...existing.filter((r) => !(r.residentId && r.residentId === record.residentId))];
+    const blob = new Blob([JSON.stringify(updated, null, 2)], { type: 'application/json' });
+    await supabase.storage.from('aadhaar-documents').upload('manifest/submissions.json', blob, {
+      upsert: true,
+      contentType: 'application/json'
+    });
+  } catch (err) {
+    console.error('Error saving remote submission:', err);
+  }
+}

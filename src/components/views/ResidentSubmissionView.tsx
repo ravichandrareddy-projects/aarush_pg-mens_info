@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ShieldCheck, Upload, CheckCircle2, Building2, User, FileText, ArrowRight, Lock } from 'lucide-react';
 import { usePG } from '../../context/PGContext';
-import { uploadResidentPhoto, uploadAadhaarDocument } from '../../lib/supabaseStorage';
+import { uploadResidentPhoto, uploadAadhaarDocument, recordSubmissionInSupabase } from '../../lib/supabaseStorage';
 
 interface ResidentSubmissionViewProps {
   roomNumber: string;
@@ -102,6 +102,18 @@ export const ResidentSubmissionView: React.FC<ResidentSubmissionViewProps> = ({
         const aUrl = await uploadAadhaarDocument(aadhaarFile, `Room_${roomNumber}_${residentName}_aadhaar`);
         if (aUrl) finalAadhaarUrl = aUrl;
       }
+
+      // Record submission in Supabase manifest so Admin App syncs automatically
+      await recordSubmissionInSupabase({
+        roomNumber,
+        bedId: selectedBedId,
+        residentId: selectedResidentId,
+        residentName,
+        phone,
+        aadhaarNumber,
+        aadhaarDocumentUrl: finalAadhaarUrl,
+        photoUrl: finalPhotoUrl
+      });
 
       // Update local resident object if matching resident exists
       if (selectedResidentId) {
