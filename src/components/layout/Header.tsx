@@ -1,5 +1,5 @@
 import React from 'react';
-import { Search, Building2, Plus, Sparkles, QrCode, Lock } from 'lucide-react';
+import { Search, Building2, Plus, Sparkles, QrCode, Lock, Send, MessageSquare } from 'lucide-react';
 import { usePG } from '../../context/PGContext';
 import { NavTab } from './Sidebar';
 
@@ -8,10 +8,11 @@ interface HeaderProps {
   onOpenSearch: () => void;
   onOpenAddResident: () => void;
   onOpenQRScanner?: () => void;
+  onOpenBulkBroadcast?: () => void;
   onAdminLogout?: () => void;
 }
 
-export const Header: React.FC<HeaderProps> = ({ activeTab, onOpenSearch, onOpenAddResident, onOpenQRScanner, onAdminLogout }) => {
+export const Header: React.FC<HeaderProps> = ({ activeTab, onOpenSearch, onOpenAddResident, onOpenQRScanner, onOpenBulkBroadcast, onAdminLogout }) => {
   const { theme, setTheme, stats } = usePG();
 
   const titleMap: Record<NavTab, string> = {
@@ -65,6 +66,19 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, onOpenSearch, onOpenA
 
       {/* Right Controls */}
       <div className="flex items-center gap-2">
+        {/* Bulk Broadcast Button (Google Form Link Broadcast) */}
+        {onOpenBulkBroadcast && (
+          <button
+            onClick={onOpenBulkBroadcast}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#536347] text-white text-xs font-mono font-bold hover:bg-[#3E4A35] transition-all shadow-subtle"
+            title="Bulk WhatsApp & Google Form Broadcaster"
+          >
+            <Send className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Google Form Broadcast</span>
+            <span className="sm:hidden">Broadcast</span>
+          </button>
+        )}
+
         {/* Mobile QR Scanner Shortcut Button */}
         {onOpenQRScanner && (
           <button

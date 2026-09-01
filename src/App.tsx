@@ -21,6 +21,7 @@ import { MoveResidentModal } from './components/modals/MoveResidentModal';
 import { MarkLeftModal } from './components/modals/MarkLeftModal';
 import { RecordPaymentModal } from './components/modals/RecordPaymentModal';
 import { GlobalSearchModal } from './components/modals/GlobalSearchModal';
+import { BulkBroadcastModal } from './components/modals/BulkBroadcastModal';
 
 import { InitialSplashScreen, ScreenTransitionLoader } from './components/layout/LoadingScreens';
 import { ResidentSubmissionView } from './components/views/ResidentSubmissionView';
@@ -107,6 +108,7 @@ const MainAppContent: React.FC = () => {
   const [recordPaymentResidentId, setRecordPaymentResidentId] = useState<string | undefined>();
 
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isBulkBroadcastOpen, setIsBulkBroadcastOpen] = useState(false);
 
   // Track if current state change was triggered by back navigation
   const isBackActionRef = useRef(false);
@@ -308,6 +310,7 @@ const MainAppContent: React.FC = () => {
           onOpenSearch={() => setIsSearchOpen(true)}
           onOpenAddResident={handleOpenAddResident}
           onOpenQRScanner={() => handleSetActiveTab('qr-scanner')}
+          onOpenBulkBroadcast={() => setIsBulkBroadcastOpen(true)}
           onAdminLogout={() => {
             setAdminSession(false);
             setIsAdminAuthenticated(false);
@@ -342,6 +345,7 @@ const MainAppContent: React.FC = () => {
                 <ResidentsView
                   onOpenAddResident={handleOpenAddResident}
                   onSelectResident={(resId) => setSelectedResidentId(resId)}
+                  onOpenBulkBroadcast={() => setIsBulkBroadcastOpen(true)}
                 />
               )}
 
@@ -358,7 +362,11 @@ const MainAppContent: React.FC = () => {
                 />
               )}
 
-              {activeTab === 'qr-scanner' && <QRScannerCollectorView />}
+              {activeTab === 'qr-scanner' && (
+                <QRScannerCollectorView
+                  onOpenBulkBroadcast={() => setIsBulkBroadcastOpen(true)}
+                />
+              )}
 
               {activeTab === 'reports' && <ReportsView />}
 
@@ -430,6 +438,11 @@ const MainAppContent: React.FC = () => {
         onClose={() => setIsSearchOpen(false)}
         setActiveTab={handleSetActiveTab}
         onSelectResident={(id) => setSelectedResidentId(id)}
+      />
+
+      <BulkBroadcastModal
+        isOpen={isBulkBroadcastOpen}
+        onClose={() => setIsBulkBroadcastOpen(false)}
       />
     </div>
   );

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { QrCode, Search, Share2, Copy, Check, ShieldCheck, Clock, FileText, User, ExternalLink, Building2, RefreshCw, Download } from 'lucide-react';
+import { QrCode, Search, Share2, Copy, Check, ShieldCheck, Clock, FileText, User, ExternalLink, Building2, RefreshCw, Download, Send } from 'lucide-react';
 import { QRCodeSVG } from '../common/QRCodeSVG';
 import { usePG } from '../../context/PGContext';
 import { getRemoteSubmissionsFromSupabase, RemoteSubmissionRecord } from '../../lib/supabaseStorage';
@@ -9,11 +9,13 @@ import { getRoomSecurityToken } from '../../utils/securityUtils';
 interface QRScannerCollectorViewProps {
   initialRoomNumber?: string;
   onClose?: () => void;
+  onOpenBulkBroadcast?: () => void;
 }
 
 export const QRScannerCollectorView: React.FC<QRScannerCollectorViewProps> = ({
   initialRoomNumber = '101',
-  onClose
+  onClose,
+  onOpenBulkBroadcast
 }) => {
   const { floors, getResidentById } = usePG();
   const [selectedFloorId, setSelectedFloorId] = useState<string>('floor1');
@@ -101,14 +103,27 @@ export const QRScannerCollectorView: React.FC<QRScannerCollectorViewProps> = ({
           </p>
         </div>
 
-        <button
-          type="button"
-          onClick={fetchRemote}
-          className="px-3.5 py-2 rounded-xl bg-[#FDFBF7] border border-[#E4E2E2] text-xs font-mono font-bold text-[#181919] hover:bg-[#F5F3F3] transition-all flex items-center gap-2 self-start md:self-auto shadow-xs"
-        >
-          <RefreshCw className="w-4 h-4 text-[#536347]" />
-          <span>Sync Submissions</span>
-        </button>
+        <div className="flex items-center gap-2 self-start md:self-auto">
+          {onOpenBulkBroadcast && (
+            <button
+              type="button"
+              onClick={onOpenBulkBroadcast}
+              className="px-3.5 py-2 rounded-xl bg-[#536347] text-white text-xs font-mono font-bold hover:bg-[#3E4A35] transition-all flex items-center gap-2 shadow-subtle"
+            >
+              <Send className="w-4 h-4 text-[#A8C393]" />
+              <span>Google Form Broadcaster</span>
+            </button>
+          )}
+
+          <button
+            type="button"
+            onClick={fetchRemote}
+            className="px-3.5 py-2 rounded-xl bg-[#FDFBF7] border border-[#E4E2E2] text-xs font-mono font-bold text-[#181919] hover:bg-[#F5F3F3] transition-all flex items-center gap-2 shadow-xs"
+          >
+            <RefreshCw className="w-4 h-4 text-[#536347]" />
+            <span>Sync Submissions</span>
+          </button>
+        </div>
       </div>
 
       {/* SIDE-BY-SIDE FLOOR TABS */}

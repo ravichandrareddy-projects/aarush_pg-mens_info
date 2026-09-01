@@ -18,13 +18,15 @@ import {
 import { usePG } from '../../context/PGContext';
 import { Resident } from '../../types/pg';
 import { formatDayAndYear } from '../../utils/dateUtils';
+import { Send } from 'lucide-react';
 
 interface ResidentsViewProps {
   onOpenAddResident: () => void;
   onSelectResident: (residentId: string) => void;
+  onOpenBulkBroadcast?: () => void;
 }
 
-export const ResidentsView: React.FC<ResidentsViewProps> = ({ onOpenAddResident, onSelectResident }) => {
+export const ResidentsView: React.FC<ResidentsViewProps> = ({ onOpenAddResident, onSelectResident, onOpenBulkBroadcast }) => {
   const { residents, theme, togglePaymentStatus } = usePG();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'ACTIVE' | 'LEFT' | 'ALL'>('ACTIVE');
@@ -65,13 +67,25 @@ export const ResidentsView: React.FC<ResidentsViewProps> = ({ onOpenAddResident,
           </p>
         </div>
 
-        <button
-          onClick={onOpenAddResident}
-          className="py-2.5 px-4 rounded-lg bg-[#181919] text-white text-xs font-medium hover:bg-[#2D2D2D] transition-colors flex items-center justify-center gap-2"
-        >
-          <UserPlus className="w-4 h-4" />
-          <span>+ Add Resident</span>
-        </button>
+        <div className="flex items-center gap-2">
+          {onOpenBulkBroadcast && (
+            <button
+              onClick={onOpenBulkBroadcast}
+              className="py-2.5 px-4 rounded-lg bg-[#536347] text-white text-xs font-mono font-bold hover:bg-[#3E4A35] transition-colors flex items-center justify-center gap-2 shadow-xs"
+            >
+              <Send className="w-4 h-4" />
+              <span>Google Form Broadcast</span>
+            </button>
+          )}
+
+          <button
+            onClick={onOpenAddResident}
+            className="py-2.5 px-4 rounded-lg bg-[#181919] text-white text-xs font-medium hover:bg-[#2D2D2D] transition-colors flex items-center justify-center gap-2"
+          >
+            <UserPlus className="w-4 h-4" />
+            <span>+ Add Resident</span>
+          </button>
+        </div>
       </div>
 
       {/* Filter and Search Bar */}
