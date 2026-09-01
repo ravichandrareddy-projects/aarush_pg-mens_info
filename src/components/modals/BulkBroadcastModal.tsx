@@ -32,13 +32,11 @@ export const BulkBroadcastModal: React.FC<BulkBroadcastModalProps> = ({
 
   // Custom Google Form URL state (Saved locally or pre-filled)
   const [googleFormUrl, setGoogleFormUrl] = useState<string>(() => {
-    return localStorage.getItem('aarush_custom_google_form_url') || initialGoogleFormUrl || 'https://forms.google.com';
+    return 'https://docs.google.com/forms/d/e/1FAIpQLSebjFBcSCEg9eNE_88Ni2DZ8NLz3ELdrVmuT0WNq8vIX6_2hg/viewform?usp=publish-editor';
   });
 
   const [messageTemplate, setMessageTemplate] = useState<string>(() => {
-    const saved = localStorage.getItem('aarush_custom_broadcast_msg');
-    if (saved) return saved;
-    return `🏢 *Aarush Mens Luxury PG - Official Announcement*\n\nDear Resident,\nPlease complete the official Google Form verification using the link below:\n\n👉 {FORM_LINK}\n\nThank you,\nPG Management`;
+    return `Hi, I am Vamsi. Please fill all the details and add your photo and aadhar photo for police verification. Do it fast and send me completed message.\n\n👉 {FORM_LINK}`;
   });
 
   const [selectedFloorFilter, setSelectedFloorFilter] = useState<string>('ALL');
