@@ -160,7 +160,7 @@ export const BulkBroadcastModal: React.FC<BulkBroadcastModalProps> = ({
                 </span>
               </h2>
               <p className="text-xs text-[#747878] font-mono">
-                Send your new Google Form link to all PG occupants from your Admin WhatsApp number.
+                Admin Mobile: <strong className="text-[#181919]">+91 63028 80134 (Vamsi)</strong> • Send Google Form link to all occupants.
               </p>
             </div>
           </div>
